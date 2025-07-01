@@ -1,33 +1,44 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
-
+import PlayerInfo from './PlayerInfo'
 function App() {
-  const [count, setCount] = useState(0)
+  const [name, setName] = useState<string>("")
+  const [show, setShow] = useState<boolean>(false)
+  const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setName(event.target.value);
+  };
+  const onEnter = (enter: React.KeyboardEvent<HTMLInputElement>) => {
+    if(enter.key == "Enter"){
+      enter.preventDefault()
+      setShow(true)
+    }
 
+  }
   return (
     <>
+      
+      <title>Brawl Analytics</title>
+      
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <img src="/img/bslogo.png"/>
+        
+        <h1 className='Title'>
+          Brawl Analytics
+        </h1>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+      <div>
+
+        <label>Enter your name: </label>
+        <input type="text" 
+        name="playerid" 
+        placeholder='PlayerID'
+        onChange={onChangeHandler}
+        onKeyDown={onEnter}
+        value={name}></input>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <PlayerInfo playerID={name} show={show}></PlayerInfo>
+
+      
     </>
   )
 }
