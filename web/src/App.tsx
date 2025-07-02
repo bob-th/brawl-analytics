@@ -18,14 +18,20 @@ function App() {
     <>
       
       <title>Brawl Analytics</title>
-      
-      <div>
-        <img src="/img/bslogo.png"/>
-        
-        <h1 className='Title'>
-          Brawl Analytics
-        </h1>
-      </div>
+      <header className=''>
+        <div className="border border-red-500 w-screen flex justify-between items-center">
+          <div className="flex">
+          <img 
+            src="/img/bslogo.png"
+            className="h-48 w-48 object-contain border border-red-50"
+          />
+          </div>
+          <h1 className='font-Oswald text-center'>
+            Brawl Analytics
+          </h1>
+          <div className="w-48"></div>
+        </div>
+      </header>
       <div>
 
         <label>Enter your name: </label>
