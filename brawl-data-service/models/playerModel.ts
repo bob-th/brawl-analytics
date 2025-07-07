@@ -1,4 +1,4 @@
-import {Brawler} from "./brawlers"
+import {Brawler} from "./brawlersModel"
 
 interface Player {
   tag: string,

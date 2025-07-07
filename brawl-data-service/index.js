@@ -1,8 +1,9 @@
 import express from "express";
 import dotenv from 'dotenv';
 import battlesRouter from "./routes/battlesRouter.js";
-import playerRouter from "./routes/playerRouter.js"
- 
+import playerRouter from "./routes/playerRouter.js";
+import cron from "node-cron"; 
+
 dotenv.config();
 
 const app = express();
@@ -15,4 +16,9 @@ app.use('/player/', playerRouter);
 
 app.listen(port, () => {
   console.log(`brawl api listener on port ${port}`);
+});
+
+// update database
+cron.schedule('* * * * *', () => {
+  
 });
