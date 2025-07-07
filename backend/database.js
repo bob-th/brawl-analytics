@@ -1,0 +1,3 @@
+const supabase = {};
+
+export supabase;
