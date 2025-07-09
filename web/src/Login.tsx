@@ -20,6 +20,8 @@ const Login = () =>
         ...prev,
         [name]: value
         }));
+        console.log("surprise", {userinfo});
+
     };
 
     // Handle form submission
@@ -31,8 +33,8 @@ const Login = () =>
 
    
     return (
-
-    <div className="min-h-[75vh] items-center flex flex-col">
+    <>
+    <div className="min-h-[75vh] items-center justify-center flex flex-col">
         <div>
                     <h1 className="p-4 text-white font-hello font-medium">
                         Login:
@@ -40,16 +42,16 @@ const Login = () =>
         </div>
 
         
-        <div className="flex justify-center items-center mb-4">
+        <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm mb-3">
             <form action="#" method="POST" className="space-y-6">
                 <div>
-                    <label htmlFor="email" className="block text-sm/6 font-medium text-gray-900">
+                    <label htmlFor="email" className="block text-sm/6 font-medium font-hello">
                         Email address
                     </label>
                     <input 
-                        className='w-64 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        className='block w-full px-3 py-1.5 rounded-md bg-gray-800 sm:text-sm/6'
                         type="email" 
-                        name="playerid" 
+                        name="username" 
                         required
                         onChange={onChangeHandler}
 
@@ -57,41 +59,49 @@ const Login = () =>
 
                     </input>
                 </div>
-                <div>
+                <div className="mb-12">
+                <div className = "">
                     <div className="flex items-center justify-between">
-                        <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
+                        <label htmlFor="password" className="block text-sm/6 font-medium font-hello">
                         Password
                         </label>
                         <div className="text-sm">
-                            <p className="font-semibold text-indigo-600 hover:text-indigo-500">
+                            <p className="font-hello text-white hover:underline">
                                 Forgot password?
                             </p>
                         </div>
                     </div>
                 </div>
-                <div className="mt-2">
-                    <input
+                <input
                     id="password"
                     name="password"
                     type="password"
                     required
+                    onChange={onChangeHandler}
                     autoComplete="current-password"
-                    className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                    />
+                    className="block w-full px-3 py-1.5 rounded-md bg-gray-800 sm:text-sm/6"
+                />
+                </div>
+                <div>
+                    <button
+                    type="submit"
+                    className="flex w-full bg-nice_purple justify-center rounded-md px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 "
+                    onSubmit={onSubmitHandler}
+                    >
+                    Sign in
+                    </button>
                 </div>
                 
             </form>
         </div>
 
-        <div className="flex justify-between">
+        <div className="flex justify-left min-w-3.5 text-purple-400/20">
             <button type="button" className="px-12 hover:underline">
-              sign up?
-            </button>
-            <button type="button" className="px-12 hover:underline">
-              forgot password?
+              Don't have an Account? sign up
             </button>
         </div>
     </div>
+    </>
     )
 }
 export default Login

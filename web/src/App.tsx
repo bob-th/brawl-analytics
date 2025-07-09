@@ -14,9 +14,7 @@ function App() {
     }
     //call api
   }
-  return (
-    <>
-      <title>Brawl Analytics</title>
+  /*
       <header className='bg-radial-[at_95%_5%] from-nice_purple/50 from-5% to-gray-900'>
         <div className="flex justify-between items-center">
           <div className='flex justify-between items-center'>
@@ -41,6 +39,11 @@ function App() {
 
         </div>
       </header>
+      */
+  return (
+    <>
+      <title>Brawl Analytics</title>
+      
 
       <div className='flex flex-col min-h-[75vh] justify-center items-center'>
         
