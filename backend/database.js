@@ -1,3 +1,3 @@
 const supabase = {};
 
-export supabase;
+export default supabase;

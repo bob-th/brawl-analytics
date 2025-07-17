@@ -1,4 +1,4 @@
-import { prefixTagURLEncoded } from "../utils/brawl.js";
+import { prefixTagURLEncoded} from "../utils/brawl.js";
 
 const controller = {
   getPlayerData: async (req, res) =>  {
@@ -34,10 +34,10 @@ const controller = {
             "Authorization": `Bearer ${process.env.BRAWL_DEVELOPER_API_KEY}`,
           }
         }
-      )
+      );
       const battleLogData = await battleLogRes.json();
   
-      res.json({ playerTag: prefixTag(playerTag), count: battleLogData.items.length, battles: battleLogData });
+      res.json({battles: battleLogData});
     },
 }  
 export default controller;
