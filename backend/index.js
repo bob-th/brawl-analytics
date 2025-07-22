@@ -8,7 +8,6 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT;
-console.log(process.env);
 
 app.use(express.json());
 
