@@ -7,6 +7,8 @@ export async function fetchWithHandling(url, options = {}) {
     throw new Error(`Request to ${url} failed with status ${res.status}`);
   }
 
+  
+
   // Assuming you usually expect JSON:
   return res.json();
 }
