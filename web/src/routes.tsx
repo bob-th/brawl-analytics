@@ -1,7 +1,7 @@
 import App from "./App.tsx"
-import Login from "./Login.tsx"
+import Login from "@components/auth/Login.tsx"
 import About from "./About.tsx"
-import Layout from "./Layout.tsx"
+import Layout from "@components/layout/Layout.tsx"
 import { type RouteObject } from 'react-router-dom';
 
 const routes: RouteObject[] = [

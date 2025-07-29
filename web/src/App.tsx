@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import PlayerInfo from './PlayerInfo'
+import PlayerInfo from './components/player/PlayerInfo.tsx'
 function App() {
   const [name, setName] = useState<string>("")
   const [show, setShow] = useState<boolean>(false)
@@ -12,7 +12,7 @@ function App() {
       enter.preventDefault()
       setShow(true)
     }
-    //call api
+    // call api
   }
   /*
       <header className='bg-radial-[at_95%_5%] from-nice_purple/50 from-5% to-gray-900'>
