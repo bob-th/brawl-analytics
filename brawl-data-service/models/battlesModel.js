@@ -7,6 +7,6 @@ export const battle = class battle_log{
         this.map = map;
     }
     printBattles(){
-        console.log(`player id: ${id} battle: ${battle_rec} time: ${time}`);
+        console.log(`player id: ${supercell_id} battle: ${battle_data} time: ${battle_time}`);
     }
 }

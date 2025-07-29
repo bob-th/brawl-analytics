@@ -2,24 +2,6 @@ console.log("🟢 INDEX.JS IS RUNNING");
 
 import express from "express";
 import dotenv from 'dotenv/config';
-import path from 'path';
-
-
-import { fileURLToPath } from 'url';
-import fs from 'fs';
-
-// Get current directory path
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-console.log("Current directory:", __dirname);
-
-// Check if .env file exists
-const envPath = path.resolve(__dirname, '.env');
-console.log("Looking for .env at:", envPath);
-console.log(".env exists?", fs.existsSync(envPath) ? "YES" : "NO");
-
-
-console.log(process.env.PORT);
 
 import cron from "node-cron";
 import pLimit from 'p-limit';
@@ -29,11 +11,8 @@ import userRouter from "./routes/userRouter.js";
 
 const app = express();
 const port = process.env.PORT;
-<<<<<<< HEAD
 
 console.log(process.env);
-=======
->>>>>>> d1af6d5878c20e207a7bb403a4dbc04428fe61aa
 
 app.use(express.json());
 
