@@ -1,9 +1,8 @@
 import express from "express";
-import dotenv from 'dotenv';
+import dotenv from 'dotenv/config';
 import playerRouter from "./routes/playerRouter.js";
 import cron from "node-cron"; 
 
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT;
