@@ -29,11 +29,8 @@ import userRouter from "./routes/userRouter.js";
 
 const app = express();
 const port = process.env.PORT;
-<<<<<<< HEAD
 
 console.log(process.env);
-=======
->>>>>>> d1af6d5878c20e207a7bb403a4dbc04428fe61aa
 
 app.use(express.json());
 
