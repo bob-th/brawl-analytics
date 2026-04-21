@@ -16,8 +16,9 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({playerID, show}) =>
       }
       return res.json();
     }
+    
     const { status, data, error } = useQuery({
-      queryKey: ['todos', playerID],
+      queryKey: ['players', playerID],
       queryFn: () => fetchPlayerData(playerID),
     })
     
@@ -28,11 +29,12 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({playerID, show}) =>
     if (status === 'error') {
     return <span>Error: {error.message}</span>
     }
-    
+    console.log(data);
     return (
     <div style={{display: show? "block": "none" }}>
         <h1 className="text-3xl font-bold underline">
             Found Player:{playerID}
+
         </h1>
     </div>
     )

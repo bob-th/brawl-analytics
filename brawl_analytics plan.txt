@@ -1,0 +1,51 @@
+PART 1: MVP ( chart of trophy progression for player id and per brawler)
+
+users can sign up to track unlimited number of player ids (for now)
+
+NOTE: may want to track even unsigned users player ids to make starting process easier
+
+users info:
+
+user_id
+password
+email
+
+player_id table (many to many join table):
+
+COMPOSITE KEY:
+user_id
+player_id
+
+brawler trophies store:
+store trophy snapshots of each brawler by player id and battle time (even for unregistered users)
+
+player_id PK
+battle_time PK
+brawler 
+brawler trophies
+battle_id FK
+
+trophies store:
+should store trophy snapshots of players registered, with player tag and battle time as composite key, brawler indexed, battle_id as foreign key
+
+player_id PK
+battle_time PK
+trophies
+battle_id FK
+
+battle info:
+store map and mode information for each battle id
+battle_id PK
+modeID
+map
+
+battle log:
+store result and trophy change for each player in the battle
+SCHEMA:
+
+player_id PK
+battle_id PK FK  
+result
+trophy_change
+
+design decisions: Focus on clean UI, analytics is only as useful as the insights it provides. Keep initial design/ insights simple and intuitive. Then, provide more insights ONLY if more data is available and never otherwise. avoid ugly useless graphs (due to lack of data) which just add clutter. focus only on trophies mode, no ranked as there is not enough data provided. 
