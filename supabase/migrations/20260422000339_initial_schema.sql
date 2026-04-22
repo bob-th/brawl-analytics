@@ -40,6 +40,7 @@ CREATE TABLE private.trophies_store (
 );
 
 
+
 -- Per-brawler trophies after the battle (the brawler the player used).
 CREATE TABLE private.brawler_trophies_store (
   player_tag       text NOT NULL,
