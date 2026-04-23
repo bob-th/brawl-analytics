@@ -12,15 +12,15 @@ export function brawlTimeToIso(brawlTime) {
   return `${y}-${mo}-${d}T${h}:${mi}:${s}.${ms}Z`;
 }
 
-// Given two canonical-shaped arrays keyed by battleId, return the union sorted
-// by battleTime desc plus the subset that came only from DS (for async writes).
-// DB wins on collision: any battleId already in DB is dropped from the DS side.
+// Given two canonical-shaped arrays keyed by battleId, return the union in
+// battleTime desc order plus the subset that came only from DS (for async
+// writes). DB wins on collision: any battleId already in DB is dropped from
+// the DS side. Both inputs arrive sorted desc (DB via .order(), DS via Brawl
+// API newest-first), and any unstored DS battle is strictly newer than every
+// dbRow, so concat preserves the order — no re-sort needed.
 export function mergeByBattleId(dbRows, dsRows) {
   const dbIds = new Set(dbRows.map((r) => r.battleId));
   const newFromDs = dsRows.filter((r) => !dbIds.has(r.battleId));
-  const newFromDs_sorted = newFromDs.sort((a, b) =>
-    a.battleTime < b.battleTime ? 1 : a.battleTime > b.battleTime ? -1 : 0
-  );
-  const merged = [...dbRows, ...newFromDs_sorted]
-  return { merged, newFromDs_sorted };
+  const merged = [...newFromDs, ...dbRows];
+  return { merged, newFromDs };
 }
