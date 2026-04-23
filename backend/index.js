@@ -6,6 +6,7 @@ import pLimit from 'p-limit';
 import playerRouter from "./routes/playerRouter.js";
 import userRouter from "./routes/userRouter.js";
 import cors from "cors";
+import { syncAllPlayers } from "./services/battleSync.js";
 
 const app = express();
 const port = process.env.PORT;
@@ -24,6 +25,15 @@ app.use('/api/', requestLogger); // Applies to all routes
 
 app.use('/api/players/', playerRouter);
 app.use('/api/users', userRouter);
-app.listen(port, () => { 
+
+// Every 30 minutes, pull fresh DS battles for every tracked player tag and
+// upsert them. Fire-and-forget — errors are logged inside syncAllPlayers.
+cron.schedule("*/30 * * * *", () => {
+  syncAllPlayers().catch((err) =>
+    console.error("cron syncAllPlayers failed:", err)
+  );
+});
+
+app.listen(port, () => {
   console.log(`web backend listening on port ${port}`);
 });

@@ -1,5 +1,16 @@
 import { supabase } from "../database.js";
 
+// Returns the distinct set of player tags tracked across all users in
+// user_players. Supabase-js has no native DISTINCT, so we dedup in memory —
+// the row count is bounded by (users × tags/user), which stays small.
+export async function fetchUniquePlayerTags() {
+  const { data, error } = await supabase
+    .from("user_players")
+    .select("player_tag");
+  if (error) throw error;
+  return [...new Set(data.map((r) => r.player_tag))];
+}
+
 // Returns canonical-shaped rows for endpoint 1 (full battle log).
 // battle_log and trophies_store share only a transitive FK via battle_info, so
 // we fire two queries in parallel and zip client-side on battle_time (PK on both).
