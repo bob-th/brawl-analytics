@@ -42,19 +42,33 @@ const controller = {
     }
 
     const formattedTag = prefixTagURLEncoded(playerTag);
-    const battleLogRes = await fetch(
-      `${BRAWL_API_BASE}/${formattedTag}/battlelog`,
-      { method: 'GET', headers: authHeaders() },
-    );
+    // Player info is needed for the current-trophies anchor that lets us
+    // reconstruct per-battle totalTrophies; fetch both in parallel.
+    const [playerRes, battleLogRes] = await Promise.all([
+      fetch(`${BRAWL_API_BASE}/${formattedTag}/`, {
+        method: 'GET',
+        headers: authHeaders(),
+      }),
+      fetch(`${BRAWL_API_BASE}/${formattedTag}/battlelog`, {
+        method: 'GET',
+        headers: authHeaders(),
+      }),
+    ]);
 
+    if (!playerRes.ok) {
+      const body = await playerRes.text();
+      console.error(`player fetch failed ${playerRes.status}:`, body);
+      return res.status(502).json({ error: 'failed to pull from api' });
+    }
     if (!battleLogRes.ok) {
       const body = await battleLogRes.text();
       console.error(`battlelog fetch failed ${battleLogRes.status}:`, body);
       return res.status(502).json({ error: 'failed to pull from api' });
     }
 
-    const raw = (await battleLogRes.json()) as RawBattleLog;
-    const battles = formatBattleLog(raw);
+    const rawPlayer = (await playerRes.json()) as RawPlayerInfo;
+    const rawLog = (await battleLogRes.json()) as RawBattleLog;
+    const battles = formatBattleLog(rawLog, rawPlayer.trophies);
     return res.json({ battles });
   },
 };

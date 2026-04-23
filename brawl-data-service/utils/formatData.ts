@@ -12,13 +12,15 @@ function collectParticipants(raw: RawBattle): RawPlayer[] {
 function toFormattedPlayer(p: RawPlayer): FormattedPlayer {
   return {
     playerTag: p.tag,
+    brawlerId: p.brawler.id,
     brawlerName: p.brawler.name,
     trophies: p.brawler.trophies,
   };
 }
 
 // Returns null for ranked matches (no trophyChange) so they can be dropped.
-function formatBattle(raw: RawBattle): FormattedBattle | null {
+// totalTrophies is filled in by the caller after ranked matches are stripped.
+function formatBattle(raw: RawBattle): Omit<FormattedBattle, 'totalTrophies'> | null {
   if (raw.battle.trophyChange === undefined) return null;
 
   const participants = collectParticipants(raw);
@@ -41,8 +43,23 @@ function formatBattle(raw: RawBattle): FormattedBattle | null {
   };
 }
 
-export function formatBattleLog(raw: RawBattleLog): FormattedBattle[] {
-  return raw.items
+// Attaches the player's trophy total at the moment each battle resolved.
+// Assumes `items` are newest-first (Brawl API convention): the first retained
+// battle's totalTrophies equals `currentTrophies`, and each older entry peels
+// off the next newer battle's trophyChange.
+export function formatBattleLog(
+  raw: RawBattleLog,
+  currentTrophies: number,
+): FormattedBattle[] {
+  const cleaned = raw.items
     .map(formatBattle)
-    .filter((b): b is FormattedBattle => b !== null);
+    .filter((b): b is Omit<FormattedBattle, 'totalTrophies'> => b !== null);
+
+  let running = currentTrophies;
+  const out: FormattedBattle[] = [];
+  for (const b of cleaned) {
+    out.push({ ...b, totalTrophies: running });
+    running -= b.trophyChange;
+  }
+  return out;
 }

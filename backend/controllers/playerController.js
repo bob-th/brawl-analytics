@@ -1,8 +1,66 @@
 import { fetchWithHandling } from "../utils/fetch.js";
 import { supabase } from "../database.js";
+import {
+  getPlayerBattles,
+  getPlayerBrawlerBattles,
+} from "../services/battleService.js";
+import { persistNewBattles } from "../services/battleWriter.js";
 //to be appended to data service url in .env, my personal account
 const TEST_PLAYER_TAG = "%232JCJG00"
 const controller = {
+  getPlayerBattlesUnified: async (req, res) => {
+    try {
+      const { playerTag } = req.params;
+      if (!playerTag) {
+        return res.status(400).json({ error: "must provide player tag" });
+      }
+
+      const { payload, dsBattlesForWrite } = await getPlayerBattles(playerTag);
+      res.json(payload);
+
+      if (dsBattlesForWrite) {
+        setImmediate(() =>
+          persistNewBattles(playerTag, dsBattlesForWrite).catch((err) =>
+            console.error("async persist failed:", err)
+          )
+        );
+      }
+    } catch (err) {
+      console.error("getPlayerBattlesUnified failed:", err);
+      return res.status(502).json({ error: "failed to fetch battles" });
+    }
+  },
+
+  getPlayerBrawlerBattles: async (req, res) => {
+    try {
+      const { playerTag } = req.params;
+      const brawlerId = Number.parseInt(req.params.brawlerId, 10);
+      if (!playerTag) {
+        return res.status(400).json({ error: "must provide player tag" });
+      }
+      if (!Number.isFinite(brawlerId)) {
+        return res.status(400).json({ error: "invalid brawlerId" });
+      }
+
+      const { payload, dsBattlesForWrite } = await getPlayerBrawlerBattles(
+        playerTag,
+        brawlerId
+      );
+      res.json(payload);
+
+      if (dsBattlesForWrite) {
+        setImmediate(() =>
+          persistNewBattles(playerTag, dsBattlesForWrite).catch((err) =>
+            console.error("async persist failed:", err)
+          )
+        );
+      }
+    } catch (err) {
+      console.error("getPlayerBrawlerBattles failed:", err);
+      return res.status(502).json({ error: "failed to fetch brawler battles" });
+    }
+  },
+
   getPlayerData: async (req, res) => {
     try {
       const { playerTag } = req.params;
