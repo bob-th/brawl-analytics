@@ -1,6 +1,7 @@
 import { fetchWithHandling } from "../utils/fetch.js";
 import { supabase } from "../database.js";
-
+//to be appended to data service url in .env, my personal account
+const TEST_PLAYER_TAG = "%232JCJG00"
 const controller = {
   getPlayerData: async (req, res) => {
     try {

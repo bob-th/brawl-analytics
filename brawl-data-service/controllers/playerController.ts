@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
 import { prefixTagURLEncoded } from '../utils/brawl.js';
 import { formatBattleLog } from '../utils/formatData.ts';
-import type { RawBattleLog } from '../types/brawlApi.ts';
+import { formatPlayerInfo } from '../utils/formatPlayer.ts';
+import type { RawBattleLog, RawPlayerInfo } from '../types/brawlApi.ts';
 
 const BRAWL_API_BASE = 'https://api.brawlstars.com/v1/players';
 
@@ -10,7 +11,6 @@ function authHeaders(): HeadersInit {
 }
 
 const controller = {
-  // Kept for parity with the old router but not part of MVP.
   getPlayerData: async (req: Request, res: Response): Promise<Response> => {
     const { playerTag } = req.params;
     if (!playerTag) {
@@ -29,8 +29,10 @@ const controller = {
       return res.status(502).json({ error: 'failed to pull from api' });
     }
 
-    const playerData = await playerRes.json();
-    return res.json({ playerData });
+    const raw = (await playerRes.json()) as RawPlayerInfo;
+    
+    const player = formatPlayerInfo(raw);
+    return res.json(player);
   },
 
   getPlayerBattleLog: async (req: Request, res: Response): Promise<Response> => {
