@@ -5,14 +5,13 @@ import {
   getPlayerBrawlerBattles,
 } from "../services/battleService.js";
 import { persistNewBattles } from "../services/battleWriter.js";
-//to be appended to data service url in .env, my personal account
-const TEST_PLAYER_TAG = "%232JCJG00"
+import { isValidTag } from "../utils/brawl.js";
 const controller = {
   getPlayerBattlesUnified: async (req, res) => {
     try {
       const { playerTag } = req.params;
-      if (!playerTag) {
-        return res.status(400).json({ error: "must provide player tag" });
+      if (!isValidTag(playerTag)) {
+        return res.status(400).json({ error: "Invalid or missing playerTag." });
       }
 
       const { payload, dsBattlesForWrite } = await getPlayerBattles(playerTag);
@@ -35,8 +34,8 @@ const controller = {
     try {
       const { playerTag } = req.params;
       const brawlerId = Number.parseInt(req.params.brawlerId, 10);
-      if (!playerTag) {
-        return res.status(400).json({ error: "must provide player tag" });
+      if (!isValidTag(playerTag)) {
+        return res.status(400).json({ error: "Invalid or missing playerTag." });
       }
       if (!Number.isFinite(brawlerId)) {
         return res.status(400).json({ error: "invalid brawlerId" });
@@ -64,8 +63,8 @@ const controller = {
   getPlayerData: async (req, res) => {
     try {
       const { playerTag } = req.params;
-      if (!playerTag) {
-        return res.status(400).json({ error: "must provide player tag" });
+      if (!isValidTag(playerTag)) {
+        return res.status(400).json({ error: "Invalid or missing playerTag." });
       }
 
       const playerData = await fetchWithHandling(
@@ -85,8 +84,8 @@ const controller = {
   getBattleData: async (req, res) => {
     try {
       const { playerTag } = req.params;
-      if (!playerTag) {
-        return res.status(400).json({ error: "must provide player tag" });
+      if (!isValidTag(playerTag)) {
+        return res.status(400).json({ error: "Invalid or missing playerTag." });
       }
 
       const { data, error } = await supabase

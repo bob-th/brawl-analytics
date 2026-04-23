@@ -13,6 +13,8 @@ services:
       - "4000:4000"
     env_file:
       - ./backend/.env
+    environment:
+      - DATA_SERVICE_URL=http://brawl-data-service:4001
     depends_on:
       - brawl-data-service
     restart: unless-stopped

@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 4001
 
-CMD ["node", "index.js"]
+CMD ["npx", "tsx", "index.js"]
