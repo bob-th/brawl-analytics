@@ -3,6 +3,6 @@ import { Router } from "express";
 
 const router = Router();
 
-router.get('/:session/supercell-ids', userController.getSupercellIds);
+router.post('/:userId/players', userController.registerPlayer);
 
-export default router; 
+export default router;

@@ -4,5 +4,9 @@ import { Router } from "express";
 const router = Router();
 
 router.get('/:playerTag/', playerController.getPlayerData);
-router.get('/:playerTag/battles', playerController.getBattleData);
+router.get('/:playerTag/battles', playerController.getPlayerBattlesUnified);
+router.get(
+  '/:playerTag/brawlers/:brawlerId/battles',
+  playerController.getPlayerBrawlerBattles
+);
 export default router; 

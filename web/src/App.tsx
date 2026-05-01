@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import './App.css'
 import PlayerInfo from './components/player/PlayerInfo.tsx'
+
 function App() {
-  const [name, setName] = useState<string>("")
-  const [show, setShow] = useState<boolean>(false)
+  const [name, setName] = useState<string>("");
+  const [show, setShow] = useState<boolean>(false);
+  
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value);
   };
@@ -12,34 +14,9 @@ function App() {
       enter.preventDefault()
       setShow(true)
     }
-    // call api
+    
   }
-  /*
-      <header className='bg-radial-[at_95%_5%] from-nice_purple/50 from-5% to-gray-900'>
-        <div className="flex justify-between items-center">
-          <div className='flex justify-between items-center'>
-            <div className="flex p-4">
-              <img 
-                src="/img/bslogo.png"
-                className="object-contain "
-              />
-            </div>
-            <h1 className='font-hello text-3xl font-bold text-purple-50'>
-              Brawl Analytics
-            </h1>
-          </div>
-          <div className="flex mr-4 space-x-2">
-            <button type="button" className="px-12 hover:underline">
-              Login
-            </button>
-            <button type="button" className="px-12 hover:underline">
-              About
-            </button>
-          </div>
-
-        </div>
-      </header>
-      */
+  
   return (
     <>
       <title>Brawl Analytics</title>
@@ -66,4 +43,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

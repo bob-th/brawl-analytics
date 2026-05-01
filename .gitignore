@@ -24,3 +24,5 @@ Thumbs.db
 
 # Others
 coverage/
+.claude/
+local/
