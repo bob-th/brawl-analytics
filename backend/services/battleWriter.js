@@ -3,8 +3,7 @@ import { brawlTimeToIso } from "../utils/mergeBattles.js";
 
 // Persists DS battles that aren't yet in the DB. Expands per the schema:
 //   battle_info            : 1 row per battle
-//   battle_log             : 1 row per battle (query player)
-//   trophies_store         : 1 row per battle (query player)
+//   battle_log             : 1 row per battle (query player) — carries `trophies`
 //   brawler_trophies_store : N rows per battle (one per participant)
 // All upserts use ON CONFLICT DO NOTHING — battles are immutable once written.
 export async function persistNewBattles(queryPlayerTag, dsBattles) {
@@ -12,7 +11,6 @@ export async function persistNewBattles(queryPlayerTag, dsBattles) {
 
   const infoRows = [];
   const logRows = [];
-  const trophiesRows = [];
   const brawlerTrophiesRows = [];
 
   for (const b of dsBattles) {
@@ -31,13 +29,7 @@ export async function persistNewBattles(queryPlayerTag, dsBattles) {
       result: b.result,
       rank: b.rank,
       trophy_change: b.trophyChange ?? 0,
-    });
-
-    trophiesRows.push({
-      player_tag: queryPlayerTag,
-      battle_time: battleTimeIso,
       trophies: b.totalTrophies,
-      battle_id: b.battleId,
     });
 
     for (const p of b.players ?? []) {
@@ -60,16 +52,10 @@ export async function persistNewBattles(queryPlayerTag, dsBattles) {
     throw new Error(`battle_info upsert failed: ${infoRes.error.message}`);
   }
 
-  const [logRes, trophiesRes, brawlerRes] = await Promise.allSettled([
+  const [logRes, brawlerRes] = await Promise.allSettled([
     supabase
       .from("battle_log")
       .upsert(logRows, {
-        onConflict: "player_tag,battle_time",
-        ignoreDuplicates: true,
-      }),
-    supabase
-      .from("trophies_store")
-      .upsert(trophiesRows, {
         onConflict: "player_tag,battle_time",
         ignoreDuplicates: true,
       }),
@@ -83,7 +69,6 @@ export async function persistNewBattles(queryPlayerTag, dsBattles) {
 
   for (const [name, res] of [
     ["battle_log", logRes],
-    ["trophies_store", trophiesRes],
     ["brawler_trophies_store", brawlerRes],
   ]) {
     if (res.status === "rejected") {

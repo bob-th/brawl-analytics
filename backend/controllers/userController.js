@@ -1,5 +1,5 @@
 import { registerPlayer } from "../services/userService.js";
-import { isValidTag, prefixTag } from "../utils/brawl.js";
+import { isValidTag, normalizeTag } from "../utils/brawl.js";
 
 // Basic UUID v4 format check
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -18,7 +18,7 @@ const controller = {
         return res.status(400).json({ error: "Invalid or missing playerTag." });
       }
 
-      const tag = prefixTag(playerTag);
+      const tag = normalizeTag(playerTag);
       const result = await registerPlayer(userId, tag);
 
       return res.status(201).json(result);

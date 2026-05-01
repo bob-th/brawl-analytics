@@ -5,11 +5,12 @@ import {
   getPlayerBrawlerBattles,
 } from "../services/battleService.js";
 import { persistNewBattles } from "../services/battleWriter.js";
-import { isValidTag } from "../utils/brawl.js";
+import { isValidTag, normalizeTag } from "../utils/brawl.js";
 const controller = {
   getPlayerBattlesUnified: async (req, res) => {
     try {
-      const { playerTag } = req.params;
+      //normalizes all player tag prefixes to #
+      const playerTag = normalizeTag(req.params.playerTag);
       if (!isValidTag(playerTag)) {
         return res.status(400).json({ error: "Invalid or missing playerTag." });
       }
@@ -32,7 +33,7 @@ const controller = {
 
   getPlayerBrawlerBattles: async (req, res) => {
     try {
-      const { playerTag } = req.params;
+      const playerTag = normalizeTag(req.params.playerTag);
       const brawlerId = Number.parseInt(req.params.brawlerId, 10);
       if (!isValidTag(playerTag)) {
         return res.status(400).json({ error: "Invalid or missing playerTag." });
@@ -62,7 +63,7 @@ const controller = {
 
   getPlayerData: async (req, res) => {
     try {
-      const { playerTag } = req.params;
+      const playerTag = normalizeTag(req.params.playerTag);
       if (!isValidTag(playerTag)) {
         return res.status(400).json({ error: "Invalid or missing playerTag." });
       }
@@ -83,7 +84,7 @@ const controller = {
 
   getBattleData: async (req, res) => {
     try {
-      const { playerTag } = req.params;
+      const playerTag = normalizeTag(req.params.playerTag);
       if (!isValidTag(playerTag)) {
         return res.status(400).json({ error: "Invalid or missing playerTag." });
       }

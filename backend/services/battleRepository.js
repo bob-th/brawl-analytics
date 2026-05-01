@@ -11,71 +11,46 @@ export async function fetchUniquePlayerTags() {
   return [...new Set(data.map((r) => r.player_tag))];
 }
 
-// Returns canonical-shaped rows for endpoint 1 (full battle log).
-// battle_log and trophies_store share only a transitive FK via battle_info, so
-// we fire two queries in parallel and zip client-side on battle_time (PK on both).
+// Endpoint 1: full battle log. `trophies` is now a column on battle_log itself
+// (see migration 20260423000000_collapse_trophies_store), so a single query
+// covers everything we need — no client-side zip.
 export async function fetchPlayerBattles(playerTag) {
-  const [logsRes, trophiesRes] = await Promise.all([
-    supabase
-      .from("battle_log")
-      .select("battle_id, battle_time, result, rank, trophy_change")
-      .eq("player_tag", playerTag)
-      .order("battle_time", { ascending: false }),
-    supabase
-      .from("trophies_store")
-      .select("battle_time, trophies")
-      .eq("player_tag", playerTag),
-  ]);
-
-  if (logsRes.error) throw logsRes.error;
-  if (trophiesRes.error) throw trophiesRes.error;
-
-  const trophiesByTime = new Map(
-    trophiesRes.data.map((r) => [r.battle_time, r.trophies])
-  );
-
-  return logsRes.data.map((r) => ({
+  const { data, error } = await supabase
+    .from("battle_log")
+    .select("battle_id, battle_time, result, rank, trophy_change, trophies")
+    .eq("player_tag", playerTag)
+    .order("battle_time", { ascending: false });
+  if (error) throw error;
+  return data.map((r) => ({
     battleId: r.battle_id,
     battleTime: r.battle_time,
     result: r.result,
     rank: r.rank,
     trophyChange: r.trophy_change,
-    trophies: trophiesByTime.get(r.battle_time) ?? null,
+    trophies: r.trophies,
   }));
 }
 
-// Returns canonical-shaped rows for endpoint 2 (per-brawler battle log).
-// Client-side inner-join on battle_time filters naturally to battles where the
-// player used this brawler.
+// Endpoint 2: per-brawler battle log. Reads from the `brawler_battle_log`
+// view, which inner-joins battle_log and brawler_trophies_store on
+// (player_tag, battle_time). Filtering by brawler at the DB level naturally
+// restricts results to battles where the player used that brawler.
 export async function fetchPlayerBrawlerBattles(playerTag, brawlerId) {
-  const [logsRes, brawlerRes] = await Promise.all([
-    supabase
-      .from("battle_log")
-      .select("battle_id, battle_time, result, rank, trophy_change")
-      .eq("player_tag", playerTag)
-      .order("battle_time", { ascending: false }),
-    supabase
-      .from("brawler_trophies_store")
-      .select("battle_time, brawler_trophies")
-      .eq("player_tag", playerTag)
-      .eq("brawler", brawlerId),
-  ]);
-
-  if (logsRes.error) throw logsRes.error;
-  if (brawlerRes.error) throw brawlerRes.error;
-
-  const brawlerTrophiesByTime = new Map(
-    brawlerRes.data.map((r) => [r.battle_time, r.brawler_trophies])
-  );
-
-  return logsRes.data
-    .filter((r) => brawlerTrophiesByTime.has(r.battle_time))
-    .map((r) => ({
-      battleId: r.battle_id,
-      battleTime: r.battle_time,
-      result: r.result,
-      rank: r.rank,
-      trophyChange: r.trophy_change,
-      brawlerTrophies: brawlerTrophiesByTime.get(r.battle_time),
-    }));
+  const { data, error } = await supabase
+    .from("brawler_battle_log")
+    .select(
+      "battle_id, battle_time, result, rank, trophy_change, brawler_trophies"
+    )
+    .eq("player_tag", playerTag)
+    .eq("brawler", brawlerId)
+    .order("battle_time", { ascending: false });
+  if (error) throw error;
+  return data.map((r) => ({
+    battleId: r.battle_id,
+    battleTime: r.battle_time,
+    result: r.result,
+    rank: r.rank,
+    trophyChange: r.trophy_change,
+    brawlerTrophies: r.brawler_trophies,
+  }));
 }
