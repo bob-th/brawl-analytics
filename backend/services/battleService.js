@@ -2,6 +2,7 @@ import { fetchDsBattles } from "./dataSource.js";
 import {
   fetchPlayerBattles,
   fetchPlayerBrawlerBattles,
+  fetchRecentBattles,
 } from "./battleRepository.js";
 import { mergeByBattleId, brawlTimeToIso } from "../utils/mergeBattles.js";
 
@@ -38,6 +39,42 @@ function dsToCanonicalBrawlerLog(b, queryPlayerTag, brawlerId) {
     rank: b.rank,
     trophyChange: b.trophyChange,
     brawlerTrophies: me.trophies,
+  };
+}
+
+// DS battle -> canonical shape used for the recent-battles merge/format.
+// Mirrors the column set returned by battleRepository.fetchRecentBattles so
+// mergeByBattleId can union the two cleanly. The query player's brawler and
+// per-brawler trophies are looked up from players[] by tag.
+function dsToCanonicalRecentBattle(b, queryPlayerTag) {
+  const me = b.players?.find((p) => p.playerTag === queryPlayerTag);
+  if (!me) return null;
+  return {
+    battleId: b.battleId,
+    battleTime: brawlTimeToIso(b.battleTime),
+    modeId: b.modeId,
+    map: b.map,
+    brawler: me.brawlerId,
+    brawlerTrophies: me.trophies,
+    trophies: b.totalTrophies,
+    trophyChange: b.trophyChange,
+    result: b.result,
+    rank: b.rank,
+  };
+}
+
+// Canonical row -> recent-battles response row. Drops battleId (an internal
+// merge key) and collapses result/rank into the single unified `result` field.
+function formatRecentBattle(r) {
+  return {
+    battleTime: r.battleTime,
+    modeId: r.modeId,
+    map: r.map,
+    brawler: r.brawler,
+    brawlerTrophies: r.brawlerTrophies,
+    trophies: r.trophies,
+    trophyChange: r.trophyChange,
+    result: unifyResult(r),
   };
 }
 
@@ -79,6 +116,65 @@ export async function getPlayerBattles(playerTag) {
 
   // Only persist when both sources succeeded — avoids re-upserting the world
   // during a sustained DB outage.
+  const bothSucceeded =
+    dsR.status === "fulfilled" && dbR.status === "fulfilled";
+  const newDsBattleIds = new Set(newFromDs.map((r) => r.battleId));
+  const dsBattlesForWrite =
+    bothSucceeded && newFromDs.length > 0
+      ? rawDsBattles.filter((b) => newDsBattleIds.has(b.battleId))
+      : null;
+
+  return { payload, dsBattlesForWrite };
+}
+
+// DS only ever returns the ~25 newest battles, so unifying with DS is only
+// useful for the first page. For deeper pages we skip the DS round-trip and
+// serve straight from the DB. The over-fetch on page 1 covers the worst case
+// where every DS battle was already in DB — we still want `limit` rows after
+// dedup.
+const RECENT_BATTLES_DS_OVERLAP = 25;
+
+export async function getRecentBattles(playerTag, limit, offset) {
+  if (offset > 0) {
+    const dbRows = await fetchRecentBattles(playerTag, limit, offset);
+    return {
+      payload: {
+        playerTag,
+        limit,
+        offset,
+        battles: dbRows.map(formatRecentBattle),
+      },
+      dsBattlesForWrite: null,
+    };
+  }
+
+  const [dsR, dbR] = await Promise.allSettled([
+    fetchDsBattles(playerTag),
+    fetchRecentBattles(playerTag, limit + RECENT_BATTLES_DS_OVERLAP, 0),
+  ]);
+  logSourceFailures("getRecentBattles", dsR, dbR);
+
+  if (dsR.status === "rejected" && dbR.status === "rejected") {
+    throw new Error("both sources failed");
+  }
+
+  const rawDsBattles = dsR.status === "fulfilled" ? dsR.value : [];
+  const dbRows = dbR.status === "fulfilled" ? dbR.value : [];
+  const dsCanonical = rawDsBattles
+    .map((b) => dsToCanonicalRecentBattle(b, playerTag))
+    .filter(Boolean);
+
+  const { merged, newFromDs } = mergeByBattleId(dbRows, dsCanonical);
+
+  const payload = {
+    playerTag,
+    limit,
+    offset,
+    battles: merged.slice(0, limit).map(formatRecentBattle),
+  };
+
+  // Same write-gate logic as getPlayerBattles: only persist when both sources
+  // succeeded so a sustained DB outage doesn't trigger a re-upsert storm.
   const bothSucceeded =
     dsR.status === "fulfilled" && dbR.status === "fulfilled";
   const newDsBattleIds = new Set(newFromDs.map((r) => r.battleId));

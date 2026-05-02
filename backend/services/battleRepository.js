@@ -71,19 +71,22 @@ export async function fetchPlayerBattlesForMetrics(playerTag) {
 // Recent-battles endpoint: full row projection ordered newest-first, paginated
 // via supabase-js .range(from, to) which maps to PostgREST's Range header.
 // Uses detailed_battle_log so mode_id and map come back in the same query.
+// battle_id is included so the row can participate in mergeByBattleId when the
+// caller unifies this with the data-service response.
 export async function fetchRecentBattles(playerTag, limit, offset) {
   const from = offset;
   const to = offset + limit - 1;
   const { data, error } = await supabase
     .from("detailed_battle_log")
     .select(
-      "battle_time, mode_id, map, brawler, brawler_trophies, trophies, trophy_change, result, rank"
+      "battle_id, battle_time, mode_id, map, brawler, brawler_trophies, trophies, trophy_change, result, rank"
     )
     .eq("player_tag", playerTag)
     .order("battle_time", { ascending: false })
     .range(from, to);
   if (error) throw error;
   return data.map((r) => ({
+    battleId: r.battle_id,
     battleTime: r.battle_time,
     modeId: r.mode_id,
     map: r.map,

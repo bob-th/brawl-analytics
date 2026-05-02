@@ -58,7 +58,7 @@ export function formatBattleLog(
   let running = currentTrophies;
   const out: FormattedBattle[] = [];
   for (const b of cleaned) {
-    out.push({ ...b, totalTrophies: running });
+    out.push({ totalTrophies: running, ...b });
     running -= b.trophyChange;
   }
   return out;
