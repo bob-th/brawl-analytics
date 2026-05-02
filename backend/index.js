@@ -2,7 +2,6 @@ import express from "express";
 import dotenv from 'dotenv/config';
 
 import cron from "node-cron";
-import pLimit from 'p-limit';
 import playerRouter from "./routes/playerRouter.js";
 import userRouter from "./routes/userRouter.js";
 import cors from "cors";
