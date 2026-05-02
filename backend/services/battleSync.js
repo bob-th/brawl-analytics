@@ -38,7 +38,7 @@ export async function syncAllPlayers() {
       console.error(`syncAllPlayers: ${tag} failed:`, err?.message ?? err);
     }
   }
-  const ms_sync = Date.now() - startedAt;
+  const ms_sync = Date.now() - ms_fetch;
   console.log(
     `syncAllPlayers: done fetch tags ${ms_fetch}ms, sync in ${ms_sync}ms — ok=${ok} failed=${failed}`
   );
