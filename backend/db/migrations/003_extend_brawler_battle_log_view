@@ -1,0 +1,30 @@
+-- Extend brawler_battle_log to also surface mode_id and map from battle_info.
+-- The metrics endpoint groups winrates by mode and the recent-battles endpoint
+-- needs both mode and map per row, so pulling them through the view avoids a
+-- second round-trip from the application layer.
+--
+-- Strictly additive: columns are appended at the end of the SELECT list, so
+-- existing readers (battleRepository.fetchPlayerBrawlerBattles) keep working
+-- without changes — they only project the columns they ask for.
+
+CREATE OR REPLACE VIEW private.brawler_battle_log AS
+SELECT
+  bl.player_tag,
+  bl.battle_time,
+  bl.battle_id,
+  bl.result,
+  bl.rank,
+  bl.trophy_change,
+  bl.trophies,
+  bts.brawler,
+  bts.brawler_trophies,
+  bi.mode_id,
+  bi.map
+FROM private.battle_log bl
+JOIN private.brawler_trophies_store bts
+  ON bts.player_tag = bl.player_tag
+ AND bts.battle_time = bl.battle_time
+JOIN private.battle_info bi
+  ON bi.battle_id = bl.battle_id;
+
+GRANT SELECT ON private.brawler_battle_log TO service_role;

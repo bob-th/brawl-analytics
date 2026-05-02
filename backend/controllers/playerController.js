@@ -5,6 +5,8 @@ import {
   getPlayerBrawlerBattles,
 } from "../services/battleService.js";
 import { persistNewBattles } from "../services/battleWriter.js";
+import { getPlayerMetrics } from "../services/metricsService.js";
+import { getRecentBattles } from "../services/recentBattlesService.js";
 import { isValidTag, normalizeTag } from "../utils/brawl.js";
 const controller = {
   getPlayerBattlesUnified: async (req, res) => {
@@ -79,6 +81,43 @@ const controller = {
     } catch (err) {
       console.error("getPlayerData failed:", err);
       return res.status(500).json({ error: "failed to fetch player data" });
+    }
+  },
+
+  getPlayerMetrics: async (req, res) => {
+    try {
+      const playerTag = normalizeTag(req.params.playerTag);
+      if (!isValidTag(playerTag)) {
+        return res.status(400).json({ error: "Invalid or missing playerTag." });
+      }
+
+      const payload = await getPlayerMetrics(playerTag);
+      res.json(payload);
+    } catch (err) {
+      console.error("getPlayerMetrics failed:", err);
+      return res.status(500).json({ error: "failed to compute metrics" });
+    }
+  },
+
+  getRecentBattles: async (req, res) => {
+    try {
+      const playerTag = normalizeTag(req.params.playerTag);
+      if (!isValidTag(playerTag)) {
+        return res.status(400).json({ error: "Invalid or missing playerTag." });
+      }
+
+      const result = await getRecentBattles(
+        playerTag,
+        req.query.limit,
+        req.query.offset
+      );
+      if (!result.ok) {
+        return res.status(result.status).json({ error: result.error });
+      }
+      res.json(result.payload);
+    } catch (err) {
+      console.error("getRecentBattles failed:", err);
+      return res.status(500).json({ error: "failed to fetch recent battles" });
     }
   },
 
