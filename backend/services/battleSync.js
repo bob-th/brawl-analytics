@@ -1,6 +1,7 @@
 import { fetchDsBattles } from "./dataSource.js";
 import { fetchUniquePlayerTags } from "./battleRepository.js";
 import { persistNewBattles } from "./battleWriter.js";
+// FOR REGULARLY UPDATING DATABSE WITH BRAWLSTARS API USING DATA SERVICE
 
 // Pulls fresh battles for one tag from the DS and upserts them. Writes rely on
 // ON CONFLICT DO NOTHING so it's safe to call repeatedly — existing rows are
@@ -23,6 +24,7 @@ export async function syncAllPlayers() {
     console.error("syncAllPlayers: fetchUniquePlayerTags failed:", err);
     return;
   }
+  const ms_fetch = Date.now() - startedAt;
 
   console.log(`syncAllPlayers: starting for ${tags.length} tags`);
   let ok = 0;
@@ -36,8 +38,8 @@ export async function syncAllPlayers() {
       console.error(`syncAllPlayers: ${tag} failed:`, err?.message ?? err);
     }
   }
-  const ms = Date.now() - startedAt;
+  const ms_sync = Date.now() - startedAt;
   console.log(
-    `syncAllPlayers: done in ${ms}ms — ok=${ok} failed=${failed}`
+    `syncAllPlayers: done fetch tags ${ms_fetch}ms, sync in ${ms_sync}ms — ok=${ok} failed=${failed}`
   );
 }

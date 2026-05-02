@@ -3,9 +3,14 @@ import { supabase } from "../database.js";
 import {
   getPlayerBattles,
   getPlayerBrawlerBattles,
+  getRecentBattles,
 } from "../services/battleService.js";
 import { persistNewBattles } from "../services/battleWriter.js";
+import { getPlayerMetrics } from "../services/metricsService.js";
 import { isValidTag, normalizeTag } from "../utils/brawl.js";
+
+const RECENT_BATTLES_DEFAULT_LIMIT = 25;
+const RECENT_BATTLES_MAX_LIMIT = 100;
 const controller = {
   getPlayerBattlesUnified: async (req, res) => {
     try {
@@ -79,6 +84,65 @@ const controller = {
     } catch (err) {
       console.error("getPlayerData failed:", err);
       return res.status(500).json({ error: "failed to fetch player data" });
+    }
+  },
+
+  getPlayerMetrics: async (req, res) => {
+    try {
+      const playerTag = normalizeTag(req.params.playerTag);
+      if (!isValidTag(playerTag)) {
+        return res.status(400).json({ error: "Invalid or missing playerTag." });
+      }
+
+      const payload = await getPlayerMetrics(playerTag);
+      res.json(payload);
+    } catch (err) {
+      console.error("getPlayerMetrics failed:", err);
+      return res.status(500).json({ error: "failed to compute metrics" });
+    }
+  },
+
+  getRecentBattles: async (req, res) => {
+    try {
+      const playerTag = normalizeTag(req.params.playerTag);
+      if (!isValidTag(playerTag)) {
+        return res.status(400).json({ error: "Invalid or missing playerTag." });
+      }
+
+      const parsedLimit =
+        req.query.limit === undefined
+          ? RECENT_BATTLES_DEFAULT_LIMIT
+          : Number.parseInt(req.query.limit, 10);
+      const parsedOffset =
+        req.query.offset === undefined
+          ? 0
+          : Number.parseInt(req.query.offset, 10);
+      if (!Number.isFinite(parsedLimit) || parsedLimit < 1) {
+        return res.status(400).json({ error: "invalid limit" });
+      }
+      if (!Number.isFinite(parsedOffset) || parsedOffset < 0) {
+        return res.status(400).json({ error: "invalid offset" });
+      }
+      const limit = Math.min(parsedLimit, RECENT_BATTLES_MAX_LIMIT);
+      const offset = parsedOffset;
+
+      const { payload, dsBattlesForWrite } = await getRecentBattles(
+        playerTag,
+        limit,
+        offset
+      );
+      res.json(payload);
+
+      if (dsBattlesForWrite) {
+        setImmediate(() =>
+          persistNewBattles(playerTag, dsBattlesForWrite).catch((err) =>
+            console.error("async persist failed:", err)
+          )
+        );
+      }
+    } catch (err) {
+      console.error("getRecentBattles failed:", err);
+      return res.status(502).json({ error: "failed to fetch recent battles" });
     }
   },
 
