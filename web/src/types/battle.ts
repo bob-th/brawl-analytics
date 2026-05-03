@@ -15,3 +15,20 @@ export interface RecentBattlesResponse {
   offset: number;
   battles: RecentBattle[];
 }
+
+export interface PlayerClub {
+  tag: string;
+  name: string;
+}
+
+export interface PlayerProfile {
+  tag: string;
+  name: string;
+  trophies: number;
+  club?: PlayerClub | null;
+}
+
+export interface PlayerDataResponse {
+  playerData: PlayerProfile;
+  playerLog: unknown;
+}

@@ -74,13 +74,11 @@ const controller = {
       }
 
       const playerData = await fetchWithHandling(
-        `${process.env.DATA_SERVICE_URL}/player/${playerTag}/`
+        `${process.env.DATA_SERVICE_URL}/player/${encodeURIComponent(playerTag)}/`
       );
-      const playerLog = await fetchWithHandling(
-        `${process.env.DATA_SERVICE_URL}/player/${playerTag}/battles`
-      );
+      
 
-      res.json({ playerData, playerLog });
+      res.json(playerData);
     } catch (err) {
       console.error("getPlayerData failed:", err);
       return res.status(500).json({ error: "failed to fetch player data" });

@@ -1,41 +1,38 @@
 import { Link } from "react-router-dom";
 
-const Header = () =>{
-  return(
-    <header className='bg-radial-[at_95%_5%] from-nice_purple/50 from-5% to-gray-900'>
-      <div className="flex justify-between items-center">
-        <div className='flex justify-between items-center'>
-          <div className="flex p-4">
-            <img 
-              src="/img/bslogo.png"
-              className="object-contain "
-            />
-          </div>
-          <h1 className='font-hello text-3xl font-bold text-purple-50'>
+const Header = () => {
+  return (
+    <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0f0409]/70 border-b border-white/[0.06]">
+      <div className="flex justify-between items-center max-w-6xl mx-auto">
+        <Link to="/" className="flex items-center gap-3 p-3">
+          <img src="/img/bslogo.png" className="h-8 object-contain" alt="" />
+          <h1 className="font-hello text-2xl font-bold text-zinc-100 tracking-tight">
             Brawl Analytics
           </h1>
-        </div>
-        <div className="flex mr-4 space-x-2">
-            <Link to = "/">
-              <button type="button" className="px-12 hover:underline">
-                Home
-              </button>
-            </Link>
-            <Link to = "/login">
-              <button type="button" className="px-12 hover:underline">
-                Login
-              </button>
-            </Link>
-            <Link to = "/about">
-              <button type="button" className="px-12 hover:underline">
-                About
-              </button>
-            </Link>
-        </div>
-
+        </Link>
+        <nav className="flex items-center pr-3 gap-1">
+          <Link
+            to="/"
+            className="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-100 transition-colors rounded-md"
+          >
+            Home
+          </Link>
+          <Link
+            to="/login"
+            className="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-100 transition-colors rounded-md"
+          >
+            Login
+          </Link>
+          <Link
+            to="/about"
+            className="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-100 transition-colors rounded-md"
+          >
+            About
+          </Link>
+        </nav>
       </div>
     </header>
-  )
-}
+  );
+};
 
 export default Header;
