@@ -23,6 +23,11 @@ services:
     build: ./web
     ports:
       - "5173:5173"
+    environment:
+      # The bundle runs in the user's browser, so this must be a host-reachable
+      # URL — http://backend:4000 (docker DNS) would not resolve from outside the
+      # compose network. Override per environment as needed.
+      - VITE_API_URL=http://localhost:4000
     depends_on:
       - backend
     restart: unless-stopped
