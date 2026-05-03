@@ -10,6 +10,9 @@ const COLOR_NEUTRAL = '#52525b';
 const COLOR_WIN = '#22c55e';
 
 const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
+  
+  console.log("got battles:", battles.slice(0,5))
+  
   const chronological = [...battles].reverse();
   const trophies = chronological.map((b) => b.trophies);
   const changes = chronological.map((b) => b.trophyChange);
@@ -20,7 +23,7 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
 
   const changeMax = Math.max(1, ...changes.map((c) => Math.abs(c)));
 
-  const points = chronological.map((b, i) => [i, b.trophies, b.trophyChange]);
+  const points = chronological.map((b) => [b.trophies, b.trophyChange]);
 
   const option = {
     grid: { left: 56, right: 16, top: 16, bottom: 16 },
@@ -59,8 +62,9 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
     },
     visualMap: {
       show: false,
+      type: 'continuous',
       seriesIndex: 0,
-      dimension: 2,
+      dimension: 1,
       min: -changeMax,
       max: changeMax,
       inRange: {
@@ -68,13 +72,10 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
       },
     },
     xAxis: {
-      type: 'value',
-      min: 0,
-      max: chronological.length - 1,
-      axisLabel: { show: false },
-      axisTick: { show: false },
-      axisLine: { show: false },
-      splitLine: { show: false },
+      type: 'category',
+      data: chronological.map((_, i) => String(i + 1)),
+      show: false,
+      boundaryGap: false,
     },
     yAxis: {
       type: 'value',
@@ -98,12 +99,12 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
     series: [
       {
         type: 'line',
+        dimensions: ['trophies', 'change'],
         data: points,
         smooth: 0.25,
         symbol: 'circle',
         symbolSize: 7,
         showSymbol: true,
-        lineStyle: { width: 2 },
         emphasis: {
           scale: 1.6,
           itemStyle: {

@@ -22,13 +22,13 @@ export interface PlayerClub {
 }
 
 export interface PlayerProfile {
-  tag: string;
+  playerTag: string;
   name: string;
   trophies: number;
+  highestTrophies?: number;
+  prestigeLevel?: number;
+  victories3v3?: number;
+  soloVictories?: number;
+  duoVictories?: number;
   club?: PlayerClub | null;
-}
-
-export interface PlayerDataResponse {
-  playerData: PlayerProfile;
-  playerLog: unknown;
 }

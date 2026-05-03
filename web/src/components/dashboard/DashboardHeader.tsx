@@ -32,7 +32,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ playerTag }) => {
           {data.name}
         </h1>
         <div className="text-sm text-zinc-400">
-          <span>{data.tag}</span>
+          <span>{data.playerTag}</span>
           {data.club ? <span> · {data.club.name}</span> : null}
         </div>
       </div>
