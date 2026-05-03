@@ -9,6 +9,8 @@ services:
 
   backend:
     build: ./backend
+    # Run via nodemon so file syncs trigger automatic restarts.
+    command: npm run dev
     ports:
       - "4000:4000"
     env_file:
@@ -18,6 +20,15 @@ services:
     depends_on:
       - brawl-data-service
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./backend/package.json
 
   web:
     build: ./web
@@ -31,3 +42,13 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./web
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+        - action: rebuild
+          path: ./web/package.json
