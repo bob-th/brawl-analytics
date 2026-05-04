@@ -1,5 +1,9 @@
 import ReactECharts from 'echarts-for-react';
 import type { RecentBattle } from '../../types/battle';
+import { brawlerName } from '../../data/brawlers';
+import { modeName } from '../../data/modes';
+
+const CHART_FONT = '"Google Sans Code", monospace';
 
 interface TrophyChartProps {
   battles: RecentBattle[];
@@ -74,7 +78,7 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
       padding: 10,
       textStyle: {
         color: '#d4d4d8',
-        fontFamily: 'DM Sans, sans-serif',
+        fontFamily: CHART_FONT,
         fontSize: 12,
       },
       axisPointer: { lineStyle: { color: 'rgba(255, 255, 255, 0.15)' } },
@@ -92,9 +96,9 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
           <div style="font-size:11px;color:#71717a;margin-bottom:8px">${formatBattleTime(b.battleTime)}</div>
           <div style="display:grid;grid-template-columns:auto auto;gap:3px 14px;font-size:12px">
             <span style="color:#a1a1aa">Mode</span>
-            <span style="color:#e4e4e7">${b.modeId}</span>
+            <span style="color:#e4e4e7">${modeName(b.modeId)}</span>
             <span style="color:#a1a1aa">Brawler</span>
-            <span style="color:#e4e4e7">${b.brawler}</span>
+            <span style="color:#e4e4e7">${brawlerName(b.brawler)}</span>
             <span style="color:#a1a1aa">Result</span>
             <span style="color:${resultColor};font-weight:500">${result}</span>
             <span style="color:#a1a1aa">Trophies</span>
@@ -121,7 +125,7 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
       axisTick: { show: false },
       axisLabel: {
         color: 'rgba(228, 228, 231, 0.45)',
-        fontFamily: 'DM Sans, sans-serif',
+        fontFamily: CHART_FONT,
         fontSize: 11,
       },
       splitLine: {

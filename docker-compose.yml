@@ -6,7 +6,15 @@ services:
     env_file:
       - ./brawl-data-service/.env
     restart: unless-stopped
-
+    develop:
+      watch:
+        - action: rebuild
+          path: ./brawl-data-service
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./brawl-data-service/package.json
   backend:
     build: ./backend
     # Run via nodemon so file syncs trigger automatic restarts.
@@ -22,7 +30,7 @@ services:
     restart: unless-stopped
     develop:
       watch:
-        - action: sync
+        - action: rebuild
           path: ./backend
           target: /app
           ignore:

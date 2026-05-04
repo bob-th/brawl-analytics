@@ -26,9 +26,14 @@ const Dashboard: React.FC = () => {
         <div className="text-zinc-400">No recent battles found.</div>
       ) : (
         <section>
-          <h2 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
-            Last 25 battles
-          </h2>
+          <div className="flex items-baseline justify-between mb-3">
+            <h2 className="font-hello text-2xl font-semibold text-zinc-100 tracking-tight">
+              Match History
+            </h2>
+            <span className="text-xs uppercase tracking-wider text-zinc-500">
+              Last {data.battles.length} battles
+            </span>
+          </div>
           <TrophyChart battles={data.battles} />
         </section>
       )}
