@@ -5,7 +5,7 @@ const Header = () => {
     <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0f0409]/70 border-b border-white/[0.06]">
       <div className="flex justify-between items-center max-w-6xl mx-auto">
         <Link to="/" className="flex items-center gap-3 p-3">
-          <img src="/img/bslogo.png" className="h-8 object-contain" alt="" />
+          <img src="/brawl_analytics_logo.svg" className="h-14 object-contain" alt="Brawl Analytics logo" />
           <h1 className="font-hello text-2xl font-bold text-zinc-100 tracking-tight">
             Brawl Analytics
           </h1>

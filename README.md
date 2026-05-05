@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="web/public/brawl_analytics_logo.svg" alt="Brawl Analytics logo" width="160" />
+</p>
+
 # Brawl Analytics
 
 Trophy-history and match-detail web app for Brawl Stars players. The frontend
