@@ -6,8 +6,8 @@ const Header = () => {
       <div className="flex justify-between items-center max-w-6xl mx-auto">
         <Link to="/" className="flex items-center gap-3 p-3">
           <img src="/brawl_analytics_logo.svg" className="h-14 object-contain" alt="Brawl Analytics logo" />
-          <h1 className="font-hello text-2xl font-bold text-zinc-100 tracking-tight">
-            Brawl Analytics
+          <h1 className="font-sans text-2xl font-bold text-zinc-300 tracking-tight">
+            brawl_analytics
           </h1>
         </Link>
         <nav className="flex items-center pr-3 gap-1">

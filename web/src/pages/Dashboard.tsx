@@ -1,4 +1,5 @@
 import { useParams } from 'react-router-dom';
+import { TypeAnimation } from 'react-type-animation';
 import { useRecentBattles } from '../hooks/useRecentBattles';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import TrophyChart from '../components/dashboard/TrophyChart';
@@ -17,7 +18,14 @@ const Dashboard: React.FC = () => {
       <DashboardHeader playerTag={playerTag} />
 
       {isPending ? (
-        <div className="text-zinc-400">Loading battles…</div>
+        <div className="text-zinc-400">
+          <TypeAnimation
+            sequence={['Loading battles…']}
+            speed={50}
+            cursor={true}
+            repeat={0}
+          />
+        </div>
       ) : isError ? (
         <div className="text-red-400">
           Error loading battles: {error instanceof Error ? error.message : 'unknown'}
@@ -28,7 +36,12 @@ const Dashboard: React.FC = () => {
         <section>
           <div className="flex items-baseline justify-between mb-3">
             <h2 className="font-hello text-2xl font-semibold text-zinc-100 tracking-tight">
-              Match History
+              <TypeAnimation
+                sequence={['Match History']}
+                speed={50}
+                cursor={false}
+                repeat={0}
+              />
             </h2>
             <span className="text-xs uppercase tracking-wider text-zinc-500">
               Last {data.battles.length} battles

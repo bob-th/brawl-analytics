@@ -2,6 +2,7 @@ import ReactECharts from 'echarts-for-react';
 import type { RecentBattle } from '../../types/battle';
 import { brawlerName } from '../../data/brawlers';
 import { modeName } from '../../data/modes';
+import { getTrophyRange } from '../../lib/battleStats';
 
 const CHART_FONT = '"Google Sans Code", monospace';
 
@@ -32,6 +33,13 @@ function colorForResult(result: string | number): string {
   return COLOR_NEUTRAL;
 }
 
+function niceTenInterval(range: number): number {
+  if (range <= 0) return 10;
+  const candidates = [10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000];
+  const target = range / 6;
+  return candidates.find((c) => c >= target) ?? candidates[candidates.length - 1];
+}
+
 function formatBattleTime(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleString(undefined, {
@@ -46,11 +54,11 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
   console.log("got battles:", battles.slice(0, 5));
 
   const chronological = [...battles].reverse();
-  const trophies = chronological.map((b) => b.trophies);
 
-  const dataMin = Math.min(...trophies);
-  const dataMax = Math.max(...trophies);
-  const padding = Math.max(5, Math.round((dataMax - dataMin) * 0.2));
+  const { min: dataMin, max: dataMax } = getTrophyRange(chronological);
+  const yMin = Math.floor(dataMin / 10) * 10;
+  const yMax = Math.ceil(dataMax / 10) * 10;
+  const yInterval = niceTenInterval(yMax - yMin);
 
   const data = chronological.map((b) => ({
     value: b.trophies,
@@ -103,9 +111,8 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
             <span style="color:${resultColor};font-weight:500">${result}</span>
             <span style="color:#a1a1aa">Trophies</span>
             <span style="color:#e4e4e7">${b.trophies.toLocaleString()}</span>
-            <span style="color:#a1a1aa">Brawler trophies</span>
+            <span style="color:#a1a1aa">Brawler Trophies</span>
             <span style="color:#e4e4e7">${b.brawlerTrophies}</span>
-            <span style="color:#a1a1aa">Change</span>
             <span style="color:${changeColor};font-weight:500">${change}</span>
           </div>
         `;
@@ -118,9 +125,9 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
     },
     yAxis: {
       type: 'value',
-      min: dataMin - padding,
-      max: dataMax + padding,
-      scale: true,
+      min: yMin,
+      max: yMax,
+      interval: yInterval,
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: {
