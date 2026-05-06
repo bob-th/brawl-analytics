@@ -23,8 +23,8 @@ function emptyCell() {
   return { wins: 0, draws: 0, losses: 0 };
 }
 
-export async function getPlayerMetrics(playerTag) {
-  const rows = await fetchPlayerBattlesForMetrics(playerTag);
+export async function getPlayerMetrics(playerTag, limit) {
+  const rows = await fetchPlayerBattlesForMetrics(playerTag, limit);
 
   const overall = emptyCell();
   const modes = {};

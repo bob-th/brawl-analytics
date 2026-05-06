@@ -2,22 +2,21 @@ import ReactECharts from 'echarts-for-react';
 import type { RecentBattle } from '../../types/battle';
 import { brawlerName } from '../../data/brawlers';
 import { modeName } from '../../data/modes';
-import { getTrophyRange } from '../../lib/battleStats';
+import {
+  CHART_FONT,
+  COLOR_LOSS,
+  COLOR_NEUTRAL,
+  COLOR_WIN,
+  colorForChange,
+  niceTenInterval,
+  rangeOf,
+} from '../../lib/chartUtils';
 
-const CHART_FONT = '"Google Sans Code", monospace';
+type TrophyValueKey = 'trophies' | 'brawlerTrophies';
 
 interface TrophyChartProps {
   battles: RecentBattle[];
-}
-
-const COLOR_LOSS = '#ef4444';
-const COLOR_NEUTRAL = '#52525b';
-const COLOR_WIN = '#22c55e';
-
-function colorForChange(change: number): string {
-  if (change > 0) return COLOR_WIN;
-  if (change < 0) return COLOR_LOSS;
-  return COLOR_NEUTRAL;
+  valueKey?: TrophyValueKey;
 }
 
 function formatResult(result: string | number): string {
@@ -33,13 +32,6 @@ function colorForResult(result: string | number): string {
   return COLOR_NEUTRAL;
 }
 
-function niceTenInterval(range: number): number {
-  if (range <= 0) return 10;
-  const candidates = [10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000];
-  const target = range / 6;
-  return candidates.find((c) => c >= target) ?? candidates[candidates.length - 1];
-}
-
 function formatBattleTime(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleString(undefined, {
@@ -50,18 +42,16 @@ function formatBattleTime(iso: string): string {
   });
 }
 
-const TrophyChart: React.FC<TrophyChartProps> = ({ battles }) => {
-  console.log("got battles:", battles.slice(0, 5));
-
+const TrophyChart: React.FC<TrophyChartProps> = ({ battles, valueKey = 'trophies' }) => {
   const chronological = [...battles].reverse();
 
-  const { min: dataMin, max: dataMax } = getTrophyRange(chronological);
+  const { min: dataMin, max: dataMax } = rangeOf(chronological.map((b) => b[valueKey]));
   const yMin = Math.floor(dataMin / 10) * 10;
   const yMax = Math.ceil(dataMax / 10) * 10;
   const yInterval = niceTenInterval(yMax - yMin);
 
   const data = chronological.map((b) => ({
-    value: b.trophies,
+    value: b[valueKey],
     itemStyle: { color: colorForChange(b.trophyChange) },
   }));
 

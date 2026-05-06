@@ -47,9 +47,25 @@ const controller = {
         return res.status(400).json({ error: "invalid brawlerId" });
       }
 
+      const rawLimit = req.query.limit;
+      const rawOffset = req.query.offset;
+      const limit =
+        rawLimit != null
+          ? Number.parseInt(rawLimit, 10)
+          : RECENT_BATTLES_DEFAULT_LIMIT;
+      const offset = rawOffset != null ? Number.parseInt(rawOffset, 10) : 0;
+      if (!Number.isFinite(limit) || limit <= 0 || limit > RECENT_BATTLES_MAX_LIMIT) {
+        return res.status(400).json({ error: "invalid limit" });
+      }
+      if (!Number.isFinite(offset) || offset < 0) {
+        return res.status(400).json({ error: "invalid offset" });
+      }
+
       const { payload, dsBattlesForWrite } = await getPlayerBrawlerBattles(
         playerTag,
-        brawlerId
+        brawlerId,
+        limit,
+        offset
       );
       res.json(payload);
 
@@ -92,7 +108,16 @@ const controller = {
         return res.status(400).json({ error: "Invalid or missing playerTag." });
       }
 
-      const payload = await getPlayerMetrics(playerTag);
+      let limit;
+      if (req.query.limit != null) {
+        const parsed = Number.parseInt(req.query.limit, 10);
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+          return res.status(400).json({ error: "Invalid limit." });
+        }
+        limit = parsed;
+      }
+
+      const payload = await getPlayerMetrics(playerTag, limit);
       res.json(payload);
     } catch (err) {
       console.error("getPlayerMetrics failed:", err);

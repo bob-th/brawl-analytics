@@ -32,3 +32,36 @@ export interface PlayerProfile {
   duoVictories?: number;
   club?: PlayerClub | null;
 }
+
+export interface OutcomeCell {
+  wins: number;
+  draws: number;
+  losses: number;
+}
+
+export interface PlayerMetrics {
+  playerTag: string;
+  overall: OutcomeCell;
+  modes: Record<string, OutcomeCell>;
+  brawlers: Record<string, OutcomeCell>;
+}
+
+export interface UnifiedBattle {
+  battleTime: string;
+  trophies: number;
+  result: string | number;
+  trophyChange: number;
+}
+
+export interface PlayerBattlesResponse {
+  playerTag: string;
+  battles: UnifiedBattle[];
+}
+
+export interface PlayerBrawlerBattlesResponse {
+  playerTag: string;
+  brawler: number;
+  limit: number;
+  offset: number;
+  battles: RecentBattle[];
+}
