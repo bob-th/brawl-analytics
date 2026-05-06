@@ -11,3 +11,7 @@ export function getTrophyRange(battles: RecentBattle[]): { min: number; max: num
   }
   return { min, max };
 }
+
+export function getTotalTrophyChange(battles: RecentBattle[]): number {
+  return battles[0].trophies - battles[battles.length - 1].trophies;
+}

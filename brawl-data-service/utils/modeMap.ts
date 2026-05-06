@@ -11,7 +11,9 @@ export const MODE_IDS: Record<string, number> = {
   heist: 8,
   basketBrawl: 9,
   wipeout: 10,
-  brawlHockey: 11
+  brawlHockey: 11,
+  duels: 12,
+  brawlArena: 13
 };
 
 export function getModeId(mode: string): number | null {

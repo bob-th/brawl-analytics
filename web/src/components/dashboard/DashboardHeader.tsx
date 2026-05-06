@@ -2,9 +2,10 @@ import { usePlayer } from '../../hooks/usePlayer';
 
 interface DashboardHeaderProps {
   playerTag: string;
+  trophyChange?: number;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ playerTag }) => {
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({ playerTag, trophyChange }) => {
   const { data, isPending, isError } = usePlayer(playerTag);
 
   const displayTag = playerTag.startsWith('#') ? playerTag : `#${playerTag}`;
@@ -38,6 +39,20 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ playerTag }) => {
       </div>
       <div className="text-right">
         <div className="text-2xl text-zinc-200 tabular-nums">
+          {trophyChange !== undefined && (
+            <span
+              className={`ml-2 text-base tabular-nums ${
+                trophyChange > 0
+                  ? 'text-green-500'
+                  : trophyChange < 0
+                  ? 'text-red-500'
+                  : 'text-zinc-500'
+              }`}
+            >
+              {trophyChange > 0 ? '+' : ''}
+              {trophyChange}{' '} 
+            </span>
+          )}
           {data.trophies.toLocaleString()}
         </div>
         <div className="text-xs uppercase tracking-wider text-zinc-500">

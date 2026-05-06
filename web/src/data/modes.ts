@@ -8,6 +8,10 @@ export const MODES: Record<number, string> = {
   7: 'Knockout',
   8: 'Heist',
   9: 'Basket Brawl',
+  10: 'wipeout',
+  11: 'brawlHockey',
+  12: 'duels',
+  13: 'brawlArena'
 };
 
 export function modeName(id: number): string {

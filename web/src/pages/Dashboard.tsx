@@ -3,6 +3,7 @@ import { TypeAnimation } from 'react-type-animation';
 import { useRecentBattles } from '../hooks/useRecentBattles';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import TrophyChart from '../components/dashboard/TrophyChart';
+import { getTotalTrophyChange } from '../lib/battleStats';
 
 const Dashboard: React.FC = () => {
   const { tag } = useParams<{ tag: string }>();
@@ -13,9 +14,12 @@ const Dashboard: React.FC = () => {
     return <div className="p-6 text-zinc-300">No player tag in URL.</div>;
   }
 
+  const trophyChange =
+    data && data.battles.length > 0 ? getTotalTrophyChange(data.battles) : undefined;
+
   return (
     <div className="p-6 max-w-5xl mx-auto text-zinc-300">
-      <DashboardHeader playerTag={playerTag} />
+      <DashboardHeader playerTag={playerTag} trophyChange={trophyChange} />
 
       {isPending ? (
         <div className="text-zinc-400">
