@@ -14,6 +14,7 @@ export interface RecentBattlesResponse {
   limit: number;
   offset: number;
   battles: RecentBattle[];
+  intervals: OutcomeCell[];
 }
 
 export interface PlayerClub {
@@ -64,4 +65,14 @@ export interface PlayerBrawlerBattlesResponse {
   limit: number;
   offset: number;
   battles: RecentBattle[];
+  intervals: OutcomeCell[];
+}
+
+export type BattlePageSource = 'recent' | 'brawler';
+
+export interface BattlePage {
+  battles: RecentBattle[];
+  metrics: OutcomeCell;
+  pageIndex: number;
+  isLastPage: boolean;
 }

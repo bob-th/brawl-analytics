@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { TypeAnimation } from 'react-type-animation';
-import { useRecentBattles } from '../hooks/useRecentBattles';
+import { useBattlePagination } from '../hooks/useBattlePagination';
 import { usePlayerMetrics } from '../hooks/usePlayerMetrics';
 import { usePlayerBattles } from '../hooks/usePlayerBattles';
-import { usePlayerBrawlerBattles } from '../hooks/usePlayerBrawlerBattles';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import TrophyChart from '../components/dashboard/TrophyChart';
 import TrophyTimelineChart from '../components/dashboard/TrophyTimelineChart';
 import WinrateChart from '../components/dashboard/WinrateChart';
+import ChartPagination from '../components/dashboard/ChartPagination';
+import AnimatedChartFrame from '../components/dashboard/AnimatedChartFrame';
 import ChartModeSelector, {
   type ChartMode,
 } from '../components/dashboard/ChartModeSelector';
@@ -17,6 +18,14 @@ import { searchAllBrawlers, topBrawlersByGames } from '../lib/brawlerSearch';
 import { brawlerName } from '../data/brawlers';
 
 const SECTION_MAX_W = 'max-w-[1552px]';
+const PAGE_SIZE = 25;
+
+function pageRangeLabel(pageIndex: number, count: number): string {
+  if (count === 0) return '—';
+  const start = pageIndex * PAGE_SIZE + 1;
+  const end = pageIndex * PAGE_SIZE + count;
+  return `Battles ${start}–${end}`;
+}
 
 const Dashboard: React.FC = () => {
   const { tag } = useParams<{ tag: string }>();
@@ -26,22 +35,18 @@ const Dashboard: React.FC = () => {
   const [selectedBrawlerId, setSelectedBrawlerId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const recent = useRecentBattles(playerTag);
-  const allTimeMetrics = usePlayerMetrics(playerTag);
-
-  // TODO: wire to recent-battles endpoint once it returns a W/L breakdown.
-  // Placeholder keeps the pie slot rendered (WinrateChart shows "—" when
-  // total === 0) without re-using a windowed metrics call.
-  const last50Metrics = {
-    data: { overall: { wins: 0, draws: 0, losses: 0 } },
-    isPending: false,
-    isError: false,
-  };
-  const allBattles = usePlayerBattles(playerTag);
-  const brawlerBattles = usePlayerBrawlerBattles(
+  const recent = useBattlePagination({
     playerTag,
-    mode === 'brawler' ? selectedBrawlerId : null
-  );
+    source: 'recent',
+    brawlerId: null,
+  });
+  const brawler = useBattlePagination({
+    playerTag,
+    source: 'brawler',
+    brawlerId: mode === 'brawler' ? selectedBrawlerId : null,
+  });
+  const allTimeMetrics = usePlayerMetrics(playerTag);
+  const allBattles = usePlayerBattles(playerTag);
 
   const brawlerOptions = useMemo(() => {
     if (!allTimeMetrics.data) return [];
@@ -54,23 +59,27 @@ const Dashboard: React.FC = () => {
     return <div className="py-6 text-zinc-300">No player tag in URL.</div>;
   }
 
+  // Trophy change displayed in the header — windowed to the currently visible
+  // 25 so it matches what the user sees on the chart.
   const trophyChange =
-    recent.data && recent.data.battles.length > 0
-      ? getTotalTrophyChange(recent.data.battles)
+    recent.page && recent.page.battles.length > 0
+      ? getTotalTrophyChange(recent.page.battles)
       : undefined;
 
   const modePieMetrics =
     mode === 'recent'
-      ? last50Metrics.data?.overall
+      ? recent.page?.metrics
       : mode === 'total'
       ? allTimeMetrics.data?.overall
       : selectedBrawlerId != null
-      ? allTimeMetrics.data?.brawlers[String(selectedBrawlerId)]
+      ? brawler.page?.metrics
       : undefined;
 
   const modePieLabel =
     mode === 'recent'
-      ? 'Last 50'
+      ? recent.page
+        ? pageRangeLabel(recent.pageIndex, recent.page.battles.length)
+        : 'Recent'
       : mode === 'total'
       ? 'All-time'
       : selectedBrawlerId != null
@@ -90,79 +99,135 @@ const Dashboard: React.FC = () => {
 
   const captionText =
     mode === 'recent'
-      ? recent.data
-        ? `Last ${recent.data.battles.length} battles`
+      ? recent.page
+        ? pageRangeLabel(recent.pageIndex, recent.page.battles.length)
         : ''
       : mode === 'total'
       ? allBattles.data
         ? `${allBattles.data.battles.length} battles total`
         : ''
-      : brawlerBattles.data
-      ? `Last ${brawlerBattles.data.battles.length} battles`
+      : brawler.page
+      ? pageRangeLabel(brawler.pageIndex, brawler.page.battles.length)
       : '';
 
-  function renderChartSlot() {
-    if (mode === 'recent') {
-      if (recent.isPending) return <ChartSkeleton message="Loading battles…" typing />;
-      if (recent.isError)
-        return (
-          <ChartError
-            message={
-              recent.error instanceof Error
-                ? recent.error.message
-                : 'unknown'
-            }
-          />
-        );
-      if (recent.data.battles.length === 0)
-        return <ChartEmpty message="No recent battles found." />;
-      return <TrophyChart battles={recent.data.battles} />;
+  function renderRecentSlot() {
+    // Only show skeleton when we've never had a page (first mount). Once we
+    // have any page data, keep showing it through subsequent fetches via
+    // keepPreviousData.
+    if (recent.isPending && !recent.page) {
+      return <ChartSkeleton message="Loading battles…" typing />;
     }
-    if (mode === 'total') {
-      if (allBattles.isPending) return <ChartSkeleton />;
-      if (allBattles.isError)
-        return (
-          <ChartError
-            message={
-              allBattles.error instanceof Error
-                ? allBattles.error.message
-                : 'unknown'
-            }
-          />
-        );
-      if (allBattles.data.battles.length === 0)
-        return <ChartEmpty message="No battle history yet." />;
+    if (recent.isError && !recent.page) {
       return (
-        <TrophyTimelineChart
-          points={allBattles.data.battles.map((b) => ({
-            battleTime: b.battleTime,
-            trophies: b.trophies,
-          }))}
+        <ChartError
+          message={recent.error instanceof Error ? recent.error.message : 'unknown'}
         />
       );
     }
-    if (selectedBrawlerId == null)
-      return <ChartEmpty message="Pick a brawler to view their progression." />;
-    if (brawlerBattles.isPending) return <ChartSkeleton />;
-    if (brawlerBattles.isError)
+    if (!recent.page || recent.page.battles.length === 0) {
+      return <ChartEmpty message="No recent battles found." />;
+    }
+    const pageKey = `recent:${recent.page.pageIndex}`;
+    return (
+      <div>
+        <AnimatedChartFrame pageKey={pageKey} direction={recent.direction}>
+          <TrophyChart battles={recent.page.battles} />
+        </AnimatedChartFrame>
+        {!recent.shouldHidePagination && (
+          <ChartPagination
+            pageIndex={recent.page.pageIndex}
+            pageSize={PAGE_SIZE}
+            currentPageBattleCount={recent.page.battles.length}
+            hasPrev={recent.hasPrev}
+            hasNext={recent.hasNext}
+            isLoadingNext={recent.isPrefetchingNext}
+            onPrev={recent.goPrev}
+            onNext={recent.goNext}
+          />
+        )}
+      </div>
+    );
+  }
+
+  function renderTotalSlot() {
+    if (allBattles.isPending) return <ChartSkeleton />;
+    if (allBattles.isError)
       return (
         <ChartError
           message={
-            brawlerBattles.error instanceof Error
-              ? brawlerBattles.error.message
-              : 'unknown'
+            allBattles.error instanceof Error ? allBattles.error.message : 'unknown'
           }
         />
       );
-    if (brawlerBattles.data.battles.length === 0)
-      return <ChartEmpty message="Not enough data available." />;
+    if (allBattles.data.battles.length === 0)
+      return <ChartEmpty message="No battle history yet." />;
     return (
-      <TrophyChart
-        battles={brawlerBattles.data.battles}
-        valueKey="brawlerTrophies"
+      <TrophyTimelineChart
+        points={allBattles.data.battles.map((b) => ({
+          battleTime: b.battleTime,
+          trophies: b.trophies,
+        }))}
       />
     );
   }
+
+  function renderBrawlerSlot() {
+    if (selectedBrawlerId == null) {
+      return <ChartEmpty message="Pick a brawler to view their progression." />;
+    }
+    if (brawler.isPending && !brawler.page) {
+      return <ChartSkeleton />;
+    }
+    if (brawler.isError && !brawler.page) {
+      return (
+        <ChartError
+          message={brawler.error instanceof Error ? brawler.error.message : 'unknown'}
+        />
+      );
+    }
+    if (!brawler.page || brawler.page.battles.length === 0) {
+      return <ChartEmpty message="Not enough data available." />;
+    }
+    const pageKey = `brawler:${selectedBrawlerId}:${brawler.page.pageIndex}`;
+    return (
+      <div>
+        <AnimatedChartFrame pageKey={pageKey} direction={brawler.direction}>
+          <TrophyChart battles={brawler.page.battles} valueKey="brawlerTrophies" />
+        </AnimatedChartFrame>
+        {!brawler.shouldHidePagination && (
+          <ChartPagination
+            pageIndex={brawler.page.pageIndex}
+            pageSize={PAGE_SIZE}
+            currentPageBattleCount={brawler.page.battles.length}
+            hasPrev={brawler.hasPrev}
+            hasNext={brawler.hasNext}
+            isLoadingNext={brawler.isPrefetchingNext}
+            onPrev={brawler.goPrev}
+            onNext={brawler.goNext}
+          />
+        )}
+      </div>
+    );
+  }
+
+  function renderChartSlot() {
+    if (mode === 'recent') return renderRecentSlot();
+    if (mode === 'total') return renderTotalSlot();
+    return renderBrawlerSlot();
+  }
+
+  const pieIsPending =
+    mode === 'recent'
+      ? recent.isPending && !recent.page
+      : mode === 'brawler'
+      ? brawler.isPending && !brawler.page
+      : allTimeMetrics.isPending;
+  const pieIsError =
+    mode === 'recent'
+      ? recent.isError && !recent.page
+      : mode === 'brawler'
+      ? brawler.isError && !brawler.page
+      : allTimeMetrics.isError;
 
   return (
     <div className="py-6 text-zinc-300">
@@ -190,16 +255,8 @@ const Dashboard: React.FC = () => {
             <PieSlot
               metrics={modePieMetrics}
               label={modePieLabel}
-              isPending={
-                mode === 'recent'
-                  ? last50Metrics.isPending
-                  : allTimeMetrics.isPending
-              }
-              isError={
-                mode === 'recent'
-                  ? last50Metrics.isError
-                  : allTimeMetrics.isError
-              }
+              isPending={pieIsPending}
+              isError={pieIsError}
             />
             <PieSlot
               metrics={allTimePieMetrics}

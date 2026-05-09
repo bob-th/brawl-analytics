@@ -61,7 +61,7 @@ export async function getPlayerBattles(playerTag: string): Promise<PlayerBattles
 export async function getPlayerBrawlerBattles(
   playerTag: string,
   brawlerId: number,
-  limit = 50,
+  limit = 25,
   offset = 0
 ): Promise<PlayerBrawlerBattlesResponse> {
   const tag = encodeURIComponent(withHash(playerTag));

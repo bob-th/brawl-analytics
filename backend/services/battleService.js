@@ -5,6 +5,7 @@ import {
   fetchRecentBattles,
 } from "./battleRepository.js";
 import { mergeByBattleId, brawlTimeToIso } from "../utils/mergeBattles.js";
+import { computeIntervals } from "../utils/battleOutcome.js";
 
 // Team modes carry a string result; showdown carries a numeric rank. The client
 // gets a single `result` field — whichever was populated.
@@ -142,12 +143,14 @@ const RECENT_BATTLES_DS_OVERLAP = 25;
 export async function getRecentBattles(playerTag, limit, offset) {
   if (offset > 0) {
     const dbRows = await fetchRecentBattles(playerTag, limit, offset);
+    const sliced = dbRows.slice(0, limit);
     return {
       payload: {
         playerTag,
         limit,
         offset,
-        battles: dbRows.map(formatRecentBattle),
+        battles: sliced.map(formatRecentBattle),
+        intervals: computeIntervals(sliced),
       },
       dsBattlesForWrite: null,
     };
@@ -170,12 +173,14 @@ export async function getRecentBattles(playerTag, limit, offset) {
     .filter(Boolean);
 
   const { merged, newFromDs } = mergeByBattleId(dbRows, dsCanonical);
+  const sliced = merged.slice(0, limit);
 
   const payload = {
     playerTag,
     limit,
     offset,
-    battles: merged.slice(0, limit).map(formatRecentBattle),
+    battles: sliced.map(formatRecentBattle),
+    intervals: computeIntervals(sliced),
   };
 
   // Same write-gate logic as getPlayerBattles: only persist when both sources
@@ -199,13 +204,15 @@ const BRAWLER_BATTLES_DS_OVERLAP = 25;
 export async function getPlayerBrawlerBattles(playerTag, brawlerId, limit, offset) {
   if (offset > 0) {
     const dbRows = await fetchPlayerBrawlerBattles(playerTag, brawlerId, limit, offset);
+    const sliced = dbRows.slice(0, limit);
     return {
       payload: {
         playerTag,
         brawler: brawlerId,
         limit,
         offset,
-        battles: dbRows.map(formatRecentBattle),
+        battles: sliced.map(formatRecentBattle),
+        intervals: computeIntervals(sliced),
       },
       dsBattlesForWrite: null,
     };
@@ -229,13 +236,15 @@ export async function getPlayerBrawlerBattles(playerTag, brawlerId, limit, offse
     .filter(Boolean);
 
   const { merged } = mergeByBattleId(dbRows, dsCanonical);
+  const sliced = merged.slice(0, limit);
 
   const payload = {
     playerTag,
     brawler: brawlerId,
     limit,
     offset,
-    battles: merged.slice(0, limit).map(formatRecentBattle),
+    battles: sliced.map(formatRecentBattle),
+    intervals: computeIntervals(sliced),
   };
 
   // Endpoint 2's DB query is brawler-filtered, so we can't cheaply compute
