@@ -13,7 +13,7 @@ import ChartModeSelector, {
   type ChartMode,
 } from '../components/dashboard/ChartModeSelector';
 import { getTotalTrophyChange } from '../lib/battleStats';
-import { searchPlayedBrawlers, topBrawlersByGames } from '../lib/brawlerSearch';
+import { searchAllBrawlers, topBrawlersByGames } from '../lib/brawlerSearch';
 import { brawlerName } from '../data/brawlers';
 
 const SECTION_MAX_W = 'max-w-[1552px]';
@@ -27,8 +27,16 @@ const Dashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const recent = useRecentBattles(playerTag);
-  const last50Metrics = usePlayerMetrics(playerTag, 50);
   const allTimeMetrics = usePlayerMetrics(playerTag);
+
+  // TODO: wire to recent-battles endpoint once it returns a W/L breakdown.
+  // Placeholder keeps the pie slot rendered (WinrateChart shows "—" when
+  // total === 0) without re-using a windowed metrics call.
+  const last50Metrics = {
+    data: { overall: { wins: 0, draws: 0, losses: 0 } },
+    isPending: false,
+    isError: false,
+  };
   const allBattles = usePlayerBattles(playerTag);
   const brawlerBattles = usePlayerBrawlerBattles(
     playerTag,
@@ -39,7 +47,7 @@ const Dashboard: React.FC = () => {
     if (!allTimeMetrics.data) return [];
     return searchQuery.trim().length === 0
       ? topBrawlersByGames(allTimeMetrics.data, 5)
-      : searchPlayedBrawlers(allTimeMetrics.data, searchQuery);
+      : searchAllBrawlers(allTimeMetrics.data, searchQuery);
   }, [allTimeMetrics.data, searchQuery]);
 
   if (!playerTag) {
@@ -147,7 +155,7 @@ const Dashboard: React.FC = () => {
         />
       );
     if (brawlerBattles.data.battles.length === 0)
-      return <ChartEmpty message="No battles with this brawler." />;
+      return <ChartEmpty message="Not enough data available." />;
     return (
       <TrophyChart
         battles={brawlerBattles.data.battles}

@@ -1,5 +1,5 @@
 import type { PlayerMetrics } from '../types/battle';
-import { brawlerName } from '../data/brawlers';
+import { BRAWLERS, brawlerName } from '../data/brawlers';
 
 export interface BrawlerSuggestion {
   id: number;
@@ -7,7 +7,7 @@ export interface BrawlerSuggestion {
   games: number;
 }
 
-function buildList(metrics: PlayerMetrics): BrawlerSuggestion[] {
+function buildPlayedList(metrics: PlayerMetrics): BrawlerSuggestion[] {
   return Object.entries(metrics.brawlers).map(([id, cell]) => ({
     id: Number(id),
     name: brawlerName(Number(id)),
@@ -15,20 +15,36 @@ function buildList(metrics: PlayerMetrics): BrawlerSuggestion[] {
   }));
 }
 
+function gamesByIdMap(metrics: PlayerMetrics): Map<number, number> {
+  return new Map(
+    Object.entries(metrics.brawlers).map(([id, cell]) => [
+      Number(id),
+      cell.wins + cell.draws + cell.losses,
+    ])
+  );
+}
+
 export function topBrawlersByGames(metrics: PlayerMetrics, n = 5): BrawlerSuggestion[] {
-  return buildList(metrics)
+  return buildPlayedList(metrics)
     .sort((a, b) => b.games - a.games)
     .slice(0, n);
 }
 
-export function searchPlayedBrawlers(
+export function searchAllBrawlers(
   metrics: PlayerMetrics,
   query: string
 ): BrawlerSuggestion[] {
   const q = query.trim().toLowerCase();
-  const list = buildList(metrics);
-  if (q.length === 0) return list.sort((a, b) => b.games - a.games);
-  return list
-    .filter((b) => b.name.toLowerCase().includes(q))
-    .sort((a, b) => b.games - a.games);
+  const played = gamesByIdMap(metrics);
+  const all: BrawlerSuggestion[] = Object.entries(BRAWLERS).map(([id, name]) => ({
+    id: Number(id),
+    name,
+    games: played.get(Number(id)) ?? 0,
+  }));
+  const filtered =
+    q.length === 0 ? all : all.filter((b) => b.name.toLowerCase().includes(q));
+  return filtered.sort((a, b) => {
+    if (a.games !== b.games) return b.games - a.games;
+    return a.name.localeCompare(b.name);
+  });
 }

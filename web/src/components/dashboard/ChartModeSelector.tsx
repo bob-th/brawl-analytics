@@ -27,7 +27,11 @@ const ChartModeSelector: React.FC<ChartModeSelectorProps> = ({
   searchQuery,
   onSearchChange,
 }) => {
-  const brawlerEnabled = mode === 'brawler';
+  const brawlerActive = mode === 'brawler';
+
+  const ensureBrawlerMode = () => {
+    if (mode !== 'brawler') onModeChange('brawler');
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -58,32 +62,36 @@ const ChartModeSelector: React.FC<ChartModeSelectorProps> = ({
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          disabled={!brawlerEnabled}
-          placeholder={brawlerEnabled ? 'Search brawlers…' : 'Select Brawler view'}
-          className="px-3 py-2 text-sm rounded-md bg-white/[0.03] border border-white/10 text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          onChange={(e) => {
+            ensureBrawlerMode();
+            onSearchChange(e.target.value);
+          }}
+          onFocus={ensureBrawlerMode}
+          placeholder="Search brawlers…"
+          className="px-3 py-2 text-sm rounded-md bg-white/[0.03] border border-white/10 text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition-colors"
         />
         <div className="flex flex-col gap-1 max-h-64 overflow-y-auto pr-1">
           {brawlerOptions.length === 0 ? (
             <span className="text-xs text-zinc-500 px-1 py-2">No matches.</span>
           ) : (
             brawlerOptions.map((b) => {
-              const active = brawlerEnabled && selectedBrawlerId === b.id;
+              const active = brawlerActive && selectedBrawlerId === b.id;
               return (
                 <button
                   key={b.id}
                   type="button"
-                  disabled={!brawlerEnabled}
                   onClick={() => onBrawlerSelect(b.id)}
                   className={
                     'flex items-baseline justify-between px-2 py-1.5 rounded text-xs transition-colors text-left ' +
                     (active
                       ? 'bg-white/[0.08] text-zinc-100'
-                      : 'text-zinc-300 hover:bg-white/[0.04] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent')
+                      : 'text-zinc-300 hover:bg-white/[0.04]')
                   }
                 >
                   <span className="truncate">{b.name}</span>
-                  <span className="text-zinc-500 tabular-nums ml-2">{b.games}</span>
+                  <span className="text-zinc-500 tabular-nums ml-2 shrink-0">
+                    {b.games > 0 ? b.games : 'no data'}
+                  </span>
                 </button>
               );
             })

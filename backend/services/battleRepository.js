@@ -69,15 +69,13 @@ export async function fetchPlayerBrawlerBattles(playerTag, brawlerId, limit, off
 // each battle into wins/draws/losses by mode and by brawler. Reads from
 // detailed_battle_log (battle_log + brawler_trophies_store + battle_info)
 // because we need mode_id; brawler_battle_log doesn't carry it on purpose.
-// When `limit` is provided, scopes to the most recent N battles.
-export async function fetchPlayerBattlesForMetrics(playerTag, limit) {
-  let query = supabase
+// Scans the player's full history; recent-window W/L lives elsewhere.
+export async function fetchPlayerBattlesForMetrics(playerTag) {
+  const { data, error } = await supabase
     .from("detailed_battle_log")
     .select("result, rank, brawler, mode_id")
     .eq("player_tag", playerTag)
     .order("battle_time", { ascending: false });
-  if (limit != null) query = query.limit(limit);
-  const { data, error } = await query;
   if (error) throw error;
   return data;
 }

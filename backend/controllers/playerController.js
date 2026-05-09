@@ -108,16 +108,7 @@ const controller = {
         return res.status(400).json({ error: "Invalid or missing playerTag." });
       }
 
-      let limit;
-      if (req.query.limit != null) {
-        const parsed = Number.parseInt(req.query.limit, 10);
-        if (!Number.isFinite(parsed) || parsed <= 0) {
-          return res.status(400).json({ error: "Invalid limit." });
-        }
-        limit = parsed;
-      }
-
-      const payload = await getPlayerMetrics(playerTag, limit);
+      const payload = await getPlayerMetrics(playerTag);
       res.json(payload);
     } catch (err) {
       console.error("getPlayerMetrics failed:", err);

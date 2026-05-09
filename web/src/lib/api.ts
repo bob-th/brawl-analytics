@@ -38,13 +38,9 @@ export async function getPlayerProfile(playerTag: string): Promise<PlayerProfile
   return res.json();
 }
 
-export async function getPlayerMetrics(
-  playerTag: string,
-  limit?: number
-): Promise<PlayerMetrics> {
+export async function getPlayerMetrics(playerTag: string): Promise<PlayerMetrics> {
   const tag = encodeURIComponent(withHash(playerTag));
-  const qs = limit != null ? `?limit=${limit}` : '';
-  const url = `${BASE_URL}/api/players/${tag}/metrics${qs}`;
+  const url = `${BASE_URL}/api/players/${tag}/metrics`;
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`metrics ${res.status}: ${res.statusText}`);
