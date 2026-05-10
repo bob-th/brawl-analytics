@@ -227,14 +227,18 @@ export function useBattlePagination({
     !(nextPageQuery.data && nextPageQuery.data.battles.length === 0) &&
     (maxKnownPage == null || pageIndex < maxKnownPage);
 
+  // direction encodes the visual slide: 1 = new content enters from the right,
+  // -1 = enters from the left. Older battles live to the left in the UI
+  // (left arrow = goNext = higher pageIndex), so going "next" slides in from
+  // the left.
   const goNext = () => {
     if (!hasNext) return;
-    setDirection(1);
+    setDirection(-1);
     setPageIndex((p) => p + 1);
   };
   const goPrev = () => {
     if (!hasPrev) return;
-    setDirection(-1);
+    setDirection(1);
     setPageIndex((p) => p - 1);
   };
 

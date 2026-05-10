@@ -27,14 +27,17 @@ const ChartPagination: React.FC<ChartPaginationProps> = ({
   const start = pageIndex * pageSize + 1;
   const end = pageIndex * pageSize + currentPageBattleCount;
 
+  // Layout: time flows left→right. Left arrow steps to older battles
+  // (onNext = higher pageIndex). Right arrow steps to newer battles
+  // (onPrev = lower pageIndex). pageIndex 0 sits at the rightmost.
   return (
     <div className="flex items-center justify-center gap-4 mt-2">
       <button
         type="button"
-        onClick={onPrev}
-        disabled={!hasPrev}
-        aria-label="Previous page"
-        className={`${ARROW_BTN_BASE} ${hasPrev ? ARROW_BTN_ACTIVE : ARROW_BTN_DISABLED}`}
+        onClick={onNext}
+        disabled={!hasNext}
+        aria-label="Older battles"
+        className={`${ARROW_BTN_BASE} ${hasNext ? ARROW_BTN_ACTIVE : ARROW_BTN_DISABLED} relative`}
       >
         <svg
           width="14"
@@ -48,16 +51,19 @@ const ChartPagination: React.FC<ChartPaginationProps> = ({
         >
           <polyline points="15 18 9 12 15 6" />
         </svg>
+        {isLoadingNext && (
+          <span className="absolute -top-1 -left-1 h-2 w-2 rounded-full bg-white/40 animate-pulse" />
+        )}
       </button>
       <span className="text-xs uppercase tracking-wider text-zinc-500 tabular-nums min-w-[120px] text-center">
         Battles {start}–{end}
       </span>
       <button
         type="button"
-        onClick={onNext}
-        disabled={!hasNext}
-        aria-label="Next page"
-        className={`${ARROW_BTN_BASE} ${hasNext ? ARROW_BTN_ACTIVE : ARROW_BTN_DISABLED} relative`}
+        onClick={onPrev}
+        disabled={!hasPrev}
+        aria-label="Newer battles"
+        className={`${ARROW_BTN_BASE} ${hasPrev ? ARROW_BTN_ACTIVE : ARROW_BTN_DISABLED}`}
       >
         <svg
           width="14"
@@ -71,9 +77,6 @@ const ChartPagination: React.FC<ChartPaginationProps> = ({
         >
           <polyline points="9 18 15 12 9 6" />
         </svg>
-        {isLoadingNext && (
-          <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-white/40 animate-pulse" />
-        )}
       </button>
     </div>
   );

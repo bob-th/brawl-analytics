@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 const Header = () => {
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-[#0f0409]/70 border-b border-white/[0.06]">
-      <div className="flex justify-between items-center max-w-7xl mx-auto">
+      <div className="flex justify-between items-center max-w-full mx-auto">
         <Link to="/" className="flex items-center gap-6 p-3">
-          <img src="/brawl_analytics_logo2.svg" className="h-14 object-contain" alt="Brawl Analytics logo" />
+          <img src="/brawl_analytics_logo.svg" className="h-14 object-contain" alt="Brawl Analytics logo" />
           <h1 className="font-sans text-2xl font-bold text-zinc-300 tracking-tight">
             brawl_analytics
           </h1>

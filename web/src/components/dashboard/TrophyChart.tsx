@@ -66,8 +66,14 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles, valueKey = 'trophies
           color: colorForChange(b.trophyChange),
         }));
 
+  const lastIdx = chronological.length - 1;
+  const earliestLabel =
+    chronological.length > 0 ? formatBattleTime(chronological[0].battleTime) : '';
+  const latestLabel =
+    chronological.length > 0 ? formatBattleTime(chronological[lastIdx].battleTime) : '';
+
   const option = {
-    grid: { left: 56, right: 16, top: 16, bottom: 16 },
+    grid: { left: 56, right: 16, top: 16, bottom: 32 },
     tooltip: {
       trigger: 'axis',
       backgroundColor: 'rgba(15, 4, 9, 0.92)',
@@ -111,7 +117,26 @@ const TrophyChart: React.FC<TrophyChartProps> = ({ battles, valueKey = 'trophies
     xAxis: {
       type: 'category',
       data: chronological.map((_, i) => String(i + 1)),
-      show: false,
+      // Equispaced category axis — points are NOT scaled to time. We only
+      // surface the earliest/latest battle times as endpoint labels.
+      boundaryGap: true,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: {
+        color: 'rgba(228, 228, 231, 0.55)',
+        fontFamily: CHART_FONT,
+        fontSize: 11,
+        margin: 12,
+        showMinLabel: true,
+        showMaxLabel: true,
+        interval: (index: number) => index === 0 || index === lastIdx,
+        formatter: (_val: string, index: number) => {
+          if (index === 0) return earliestLabel;
+          if (index === lastIdx) return latestLabel;
+          return '';
+        },
+      },
+      splitLine: { show: false },
     },
     yAxis: {
       type: 'value',
