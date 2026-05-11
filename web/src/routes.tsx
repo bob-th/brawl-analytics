@@ -4,6 +4,7 @@ import About from "./pages/About.tsx";
 import Layout from "./components/layout/Layout.tsx";
 import { type RouteObject } from 'react-router-dom';
 import Login from "./pages/Login.tsx";
+import Dashboard from "./pages/Dashboard.tsx";
 const routes: RouteObject[] = [
     {
     path: "/",
@@ -20,6 +21,10 @@ const routes: RouteObject[] = [
       {
         path: "/about",
         element: <About />,
+      },
+      {
+        path: "/player/:tag",
+        element: <Dashboard />,
       },
     ],
     },

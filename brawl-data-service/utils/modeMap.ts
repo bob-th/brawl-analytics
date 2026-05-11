@@ -9,7 +9,11 @@ export const MODE_IDS: Record<string, number> = {
   hotZone: 6,
   knockout: 7,
   heist: 8,
-  
+  basketBrawl: 9,
+  wipeout: 10,
+  brawlHockey: 11,
+  duels: 12,
+  brawlArena: 13
 };
 
 export function getModeId(mode: string): number | null {

@@ -6,9 +6,19 @@ services:
     env_file:
       - ./brawl-data-service/.env
     restart: unless-stopped
-
+    develop:
+      watch:
+        - action: rebuild
+          path: ./brawl-data-service
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./brawl-data-service/package.json
   backend:
     build: ./backend
+    # Run via nodemon so file syncs trigger automatic restarts.
+    command: npm run dev
     ports:
       - "4000:4000"
     env_file:
@@ -18,11 +28,35 @@ services:
     depends_on:
       - brawl-data-service
     restart: unless-stopped
+    develop:
+      watch:
+        - action: rebuild
+          path: ./backend
+          target: /app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./backend/package.json
 
   web:
     build: ./web
     ports:
       - "5173:5173"
+    environment:
+      # The bundle runs in the user's browser, so this must be a host-reachable
+      # URL — http://backend:4000 (docker DNS) would not resolve from outside the
+      # compose network. Override per environment as needed.
+      - VITE_API_URL=http://localhost:4000
     depends_on:
       - backend
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./web
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+        - action: rebuild
+          path: ./web/package.json

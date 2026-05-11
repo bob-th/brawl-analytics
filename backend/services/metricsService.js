@@ -1,27 +1,5 @@
 import { fetchPlayerBattlesForMetrics } from "./battleRepository.js";
-
-// Mode IDs from brawl-data-service/utils/modeMap.ts. Showdown modes use rank
-// instead of victory/defeat — top 4 (solo) / top 2 (duo) are the trophy-gaining
-// ranks and count as wins; everything else is a loss. Showdown never produces
-// draws.
-const SOLO_SHOWDOWN_MODE_ID = 1;
-const DUO_SHOWDOWN_MODE_ID = 2;
-
-function classifyOutcome(modeId, result, rank) {
-  if (modeId === SOLO_SHOWDOWN_MODE_ID) {
-    return rank != null && rank <= 4 ? "wins" : "losses";
-  }
-  if (modeId === DUO_SHOWDOWN_MODE_ID) {
-    return rank != null && rank <= 2 ? "wins" : "losses";
-  }
-  if (result === "victory") return "wins";
-  if (result === "draw") return "draws";
-  return "losses";
-}
-
-function emptyCell() {
-  return { wins: 0, draws: 0, losses: 0 };
-}
+import { classifyOutcome, emptyCell } from "../utils/battleOutcome.js";
 
 export async function getPlayerMetrics(playerTag) {
   const rows = await fetchPlayerBattlesForMetrics(playerTag);

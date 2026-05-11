@@ -1,0 +1,192 @@
+import ReactECharts from 'echarts-for-react';
+import type { RecentBattle } from '../../types/battle';
+import { brawlerName } from '../../data/brawlers';
+import { modeName } from '../../data/modes';
+import {
+  CHART_FONT,
+  COLOR_LOSS,
+  COLOR_NEUTRAL,
+  COLOR_WIN,
+  colorForChange,
+  niceTenInterval,
+  rangeOf,
+} from '../../lib/chartUtils';
+
+type TrophyValueKey = 'trophies' | 'brawlerTrophies';
+
+interface TrophyChartProps {
+  battles: RecentBattle[];
+  valueKey?: TrophyValueKey;
+}
+
+function formatResult(result: string | number): string {
+  if (typeof result === 'number') return `Rank ${result}`;
+  if (!result) return '—';
+  return result.charAt(0).toUpperCase() + result.slice(1);
+}
+
+function colorForResult(result: string | number): string {
+  if (typeof result === 'number') return result <= 4 ? COLOR_WIN : COLOR_LOSS;
+  if (result === 'victory') return COLOR_WIN;
+  if (result === 'defeat') return COLOR_LOSS;
+  return COLOR_NEUTRAL;
+}
+
+function formatBattleTime(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+const TrophyChart: React.FC<TrophyChartProps> = ({ battles, valueKey = 'trophies' }) => {
+  const chronological = [...battles].reverse();
+
+  const { min: dataMin, max: dataMax } = rangeOf(chronological.map((b) => b[valueKey]));
+  const yMin = Math.floor(dataMin / 10) * 10;
+  const yMax = Math.ceil(dataMax / 10) * 10;
+  const yInterval = niceTenInterval(yMax - yMin);
+
+  const data = chronological.map((b) => ({
+    value: b[valueKey],
+    itemStyle: { color: colorForChange(b.trophyChange) },
+  }));
+
+  const colorStops =
+    chronological.length === 1
+      ? [
+          { offset: 0, color: colorForChange(chronological[0].trophyChange) },
+          { offset: 1, color: colorForChange(chronological[0].trophyChange) },
+        ]
+      : chronological.map((b, i) => ({
+          offset: i / (chronological.length - 1),
+          color: colorForChange(b.trophyChange),
+        }));
+
+  const lastIdx = chronological.length - 1;
+  const earliestLabel =
+    chronological.length > 0 ? formatBattleTime(chronological[0].battleTime) : '';
+  const latestLabel =
+    chronological.length > 0 ? formatBattleTime(chronological[lastIdx].battleTime) : '';
+
+  const option = {
+    grid: { left: 56, right: 16, top: 16, bottom: 32 },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(15, 4, 9, 0.92)',
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+      borderWidth: 1,
+      padding: 10,
+      textStyle: {
+        color: '#d4d4d8',
+        fontFamily: CHART_FONT,
+        fontSize: 12,
+      },
+      axisPointer: { lineStyle: { color: 'rgba(255, 255, 255, 0.15)' } },
+      formatter: (params: { dataIndex: number }[]) => {
+        const i = params[0].dataIndex;
+        const b = chronological[i];
+        const change =
+          b.trophyChange > 0 ? `+${b.trophyChange}` : `${b.trophyChange}`;
+        const changeColor = colorForChange(b.trophyChange);
+        const result = formatResult(b.result);
+        const resultColor = colorForResult(b.result);
+
+        return `
+          <div style="font-weight:500;color:#fafafa;font-size:13px;margin-bottom:2px">${b.map}</div>
+          <div style="font-size:11px;color:#71717a;margin-bottom:8px">${formatBattleTime(b.battleTime)}</div>
+          <div style="display:grid;grid-template-columns:auto auto;gap:3px 14px;font-size:12px">
+            <span style="color:#a1a1aa">Mode</span>
+            <span style="color:#e4e4e7">${modeName(b.modeId)}</span>
+            <span style="color:#a1a1aa">Brawler</span>
+            <span style="color:#e4e4e7">${brawlerName(b.brawler)}</span>
+            <span style="color:#a1a1aa">Result</span>
+            <span style="color:${resultColor};font-weight:500">${result}</span>
+            <span style="color:#a1a1aa">Trophies</span>
+            <span style="color:#e4e4e7">${b.trophies.toLocaleString()}</span>
+            <span style="color:#a1a1aa">Brawler Trophies</span>
+            <span style="color:#e4e4e7">${b.brawlerTrophies}</span>
+            <span style="color:${changeColor};font-weight:500">${change}</span>
+          </div>
+        `;
+      },
+    },
+    xAxis: {
+      type: 'category',
+      data: chronological.map((_, i) => String(i + 1)),
+      // Equispaced category axis — points are NOT scaled to time. We only
+      // surface the earliest/latest battle times as endpoint labels.
+      boundaryGap: true,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: {
+        color: 'rgba(228, 228, 231, 0.55)',
+        fontFamily: CHART_FONT,
+        fontSize: 11,
+        margin: 12,
+        showMinLabel: true,
+        showMaxLabel: true,
+        interval: (index: number) => index === 0 || index === lastIdx,
+        formatter: (_val: string, index: number) => {
+          if (index === 0) return earliestLabel;
+          if (index === lastIdx) return latestLabel;
+          return '';
+        },
+      },
+      splitLine: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      min: yMin,
+      max: yMax,
+      interval: yInterval,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: {
+        color: 'rgba(228, 228, 231, 0.45)',
+        fontFamily: CHART_FONT,
+        fontSize: 11,
+      },
+      splitLine: {
+        lineStyle: { color: 'rgba(255, 255, 255, 0.04)', type: 'solid' },
+      },
+    },
+    series: [
+      {
+        type: 'line',
+        data: data,
+        smooth: 0.25,
+        symbol: 'circle',
+        symbolSize: 7,
+        showSymbol: true,
+        lineStyle: {
+          width: 2.5,
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 1,
+            y2: 0,
+            colorStops,
+          },
+        },
+        emphasis: {
+          scale: 1.6,
+          itemStyle: {
+            borderColor: 'rgba(255, 255, 255, 0.85)',
+            borderWidth: 2,
+          },
+        },
+      },
+    ],
+  };
+
+  return (
+    <ReactECharts option={option} style={{ height: 360, width: '100%' }} />
+  );
+};
+
+export default TrophyChart;

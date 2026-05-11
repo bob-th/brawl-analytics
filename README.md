@@ -1,6 +1,9 @@
-# Brawl Analytics
+<h1>
+  <img src="web/public/brawl_analytics_logo.svg" width="75" height="75" align="center" alt="Brawl Analytics Logo">
+  Brawl Analytics
+</h1>
 
-Trophy-history and match-detail web app for Brawl Stars players. The frontend
+Brawler Trophy-history and match-detail web app for Brawl Stars players. The frontend
 is intentionally omitted from this README — it's pending a full refactor. What
 follows describes the two backend services that the frontend (current and
 future) consumes.

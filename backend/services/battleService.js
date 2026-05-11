@@ -5,6 +5,7 @@ import {
   fetchRecentBattles,
 } from "./battleRepository.js";
 import { mergeByBattleId, brawlTimeToIso } from "../utils/mergeBattles.js";
+import { computeIntervals } from "../utils/battleOutcome.js";
 
 // Team modes carry a string result; showdown carries a numeric rank. The client
 // gets a single `result` field — whichever was populated.
@@ -25,8 +26,9 @@ function dsToCanonicalFullLog(b) {
 }
 
 // DS battle -> canonical shape used for endpoint 2 merge/format. Filters to
-// battles where the query player used the target brawler and pulls that
-// player's per-brawler trophies from the players[] entry.
+// battles where the query player used the target brawler. Mirrors the rich
+// shape of dsToCanonicalRecentBattle so mergeByBattleId can union cleanly
+// with the DB rows from the brawler-filtered detailed_battle_log query.
 function dsToCanonicalBrawlerLog(b, queryPlayerTag, brawlerId) {
   const me = b.players?.find(
     (p) => p.playerTag === queryPlayerTag && p.brawlerId === brawlerId
@@ -35,10 +37,14 @@ function dsToCanonicalBrawlerLog(b, queryPlayerTag, brawlerId) {
   return {
     battleId: b.battleId,
     battleTime: brawlTimeToIso(b.battleTime),
+    modeId: b.modeId,
+    map: b.map,
+    brawler: me.brawlerId,
+    brawlerTrophies: me.trophies,
+    trophies: b.totalTrophies,
+    trophyChange: b.trophyChange,
     result: b.result,
     rank: b.rank,
-    trophyChange: b.trophyChange,
-    brawlerTrophies: me.trophies,
   };
 }
 
@@ -137,12 +143,14 @@ const RECENT_BATTLES_DS_OVERLAP = 25;
 export async function getRecentBattles(playerTag, limit, offset) {
   if (offset > 0) {
     const dbRows = await fetchRecentBattles(playerTag, limit, offset);
+    const sliced = dbRows.slice(0, limit);
     return {
       payload: {
         playerTag,
         limit,
         offset,
-        battles: dbRows.map(formatRecentBattle),
+        battles: sliced.map(formatRecentBattle),
+        intervals: computeIntervals(sliced),
       },
       dsBattlesForWrite: null,
     };
@@ -165,12 +173,14 @@ export async function getRecentBattles(playerTag, limit, offset) {
     .filter(Boolean);
 
   const { merged, newFromDs } = mergeByBattleId(dbRows, dsCanonical);
+  const sliced = merged.slice(0, limit);
 
   const payload = {
     playerTag,
     limit,
     offset,
-    battles: merged.slice(0, limit).map(formatRecentBattle),
+    battles: sliced.map(formatRecentBattle),
+    intervals: computeIntervals(sliced),
   };
 
   // Same write-gate logic as getPlayerBattles: only persist when both sources
@@ -186,10 +196,31 @@ export async function getRecentBattles(playerTag, limit, offset) {
   return { payload, dsBattlesForWrite };
 }
 
-export async function getPlayerBrawlerBattles(playerTag, brawlerId) {
+// Same DS-overlap pattern as getRecentBattles: page 0 unifies DS with DB and
+// over-fetches from DB so we still produce `limit` rows after dedup; deeper
+// pages skip the DS round-trip and serve straight from DB.
+const BRAWLER_BATTLES_DS_OVERLAP = 25;
+
+export async function getPlayerBrawlerBattles(playerTag, brawlerId, limit, offset) {
+  if (offset > 0) {
+    const dbRows = await fetchPlayerBrawlerBattles(playerTag, brawlerId, limit, offset);
+    const sliced = dbRows.slice(0, limit);
+    return {
+      payload: {
+        playerTag,
+        brawler: brawlerId,
+        limit,
+        offset,
+        battles: sliced.map(formatRecentBattle),
+        intervals: computeIntervals(sliced),
+      },
+      dsBattlesForWrite: null,
+    };
+  }
+
   const [dsR, dbR] = await Promise.allSettled([
     fetchDsBattles(playerTag),
-    fetchPlayerBrawlerBattles(playerTag, brawlerId),
+    fetchPlayerBrawlerBattles(playerTag, brawlerId, limit + BRAWLER_BATTLES_DS_OVERLAP, 0),
   ]);
   logSourceFailures("getPlayerBrawlerBattles", dsR, dbR);
 
@@ -205,16 +236,15 @@ export async function getPlayerBrawlerBattles(playerTag, brawlerId) {
     .filter(Boolean);
 
   const { merged } = mergeByBattleId(dbRows, dsCanonical);
+  const sliced = merged.slice(0, limit);
 
   const payload = {
     playerTag,
     brawler: brawlerId,
-    battles: merged.map((r) => ({
-      battleTime: r.battleTime,
-      brawlerTrophies: r.brawlerTrophies,
-      trophyChange: r.trophyChange,
-      result: unifyResult(r),
-    })),
+    limit,
+    offset,
+    battles: sliced.map(formatRecentBattle),
+    intervals: computeIntervals(sliced),
   };
 
   // Endpoint 2's DB query is brawler-filtered, so we can't cheaply compute

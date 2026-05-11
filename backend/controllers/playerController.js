@@ -47,9 +47,25 @@ const controller = {
         return res.status(400).json({ error: "invalid brawlerId" });
       }
 
+      const rawLimit = req.query.limit;
+      const rawOffset = req.query.offset;
+      const limit =
+        rawLimit != null
+          ? Number.parseInt(rawLimit, 10)
+          : RECENT_BATTLES_DEFAULT_LIMIT;
+      const offset = rawOffset != null ? Number.parseInt(rawOffset, 10) : 0;
+      if (!Number.isFinite(limit) || limit <= 0 || limit > RECENT_BATTLES_MAX_LIMIT) {
+        return res.status(400).json({ error: "invalid limit" });
+      }
+      if (!Number.isFinite(offset) || offset < 0) {
+        return res.status(400).json({ error: "invalid offset" });
+      }
+
       const { payload, dsBattlesForWrite } = await getPlayerBrawlerBattles(
         playerTag,
-        brawlerId
+        brawlerId,
+        limit,
+        offset
       );
       res.json(payload);
 
@@ -74,13 +90,11 @@ const controller = {
       }
 
       const playerData = await fetchWithHandling(
-        `${process.env.DATA_SERVICE_URL}/player/${playerTag}/`
+        `${process.env.DATA_SERVICE_URL}/player/${encodeURIComponent(playerTag)}/`
       );
-      const playerLog = await fetchWithHandling(
-        `${process.env.DATA_SERVICE_URL}/player/${playerTag}/battles`
-      );
+      
 
-      res.json({ playerData, playerLog });
+      res.json(playerData);
     } catch (err) {
       console.error("getPlayerData failed:", err);
       return res.status(500).json({ error: "failed to fetch player data" });

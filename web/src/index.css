@@ -1,13 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&display=swap');
+@import "tailwindcss";
+
 /* adding custom fonts + buttons*/
-@theme{
-  --font-hello: Chakra Petch, "sans-serif";
+@theme {
+  --font-hello: "Chakra Petch", sans-serif;
+  --font-sans: "Google Sans Code", monospace;
   --color-nice_purple: #472560;
 }
-@layer base{
+
+@layer base {
   button {
     font-size: large;
-    font-family: var(--font-hello);
     background-color: transparent;
     outline-width: 2px;
     outline-offset: 2px;
@@ -18,12 +22,15 @@
 }
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: "Google Sans Code", monospace;
+  font-optical-sizing: auto;
   font-weight: 400;
+  font-style: normal;
+  font-variation-settings: "MONO" 1;
+  line-height: 1.5;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color-scheme: dark;
+  color: #d4d4d8;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -33,34 +40,18 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: inherit;
   text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
 }
 
 body {
   margin: 0;
-  
   min-width: 320px;
-  
+  background-color: #0f0409;
+  font-family: "Google Sans Code", monospace;
+  font-variation-settings: "MONO" 1;
 }
 
 h1 {
-  font-size: 3.2em;
   line-height: 1.1;
-}
-
-
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  
 }
