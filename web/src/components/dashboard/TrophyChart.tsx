@@ -37,8 +37,9 @@ function formatBattleTime(iso: string): string {
   return d.toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
-    hour: 'numeric',
+    hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
   });
 }
 
