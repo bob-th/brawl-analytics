@@ -7,6 +7,12 @@ export interface FormattedPlayer {
   brawlerId: number;
   brawlerName: string;
   trophies: number;
+  // Per-participant outcome.
+  //   Team modes:    1 = victory, 0 = loss, -1 = draw
+  //   Solo showdown: 1..10 (finish position from API players[] order)
+  //   Showdown duo:  1..N  (team finish position from API teams[] order)
+  //   null:          outcome could not be derived (defensive fallback)
+  placement: number | null;
 }
 
 export interface FormattedBattle {
