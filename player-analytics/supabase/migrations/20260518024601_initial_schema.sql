@@ -161,8 +161,6 @@ INSERT INTO public.brawler_dim (brawler_id, name, class) VALUES
   (16000083, 'Clancy',          'Damage Dealer'),
   (16000084, 'Moe',             'Damage Dealer'),
   (16000085, 'Kenji',           'Assassin'),
-  -- Verify and patch class for the entries below before relying on
-  -- class-grouped analytics.
   (16000086, 'Shade',           'Assassin'),
   (16000087, 'Juju',            'Artillery'),
   (16000089, 'Meeple',          'Controller'),
