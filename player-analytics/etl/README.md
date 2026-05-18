@@ -29,24 +29,57 @@ etl/
 | `ETL_KEY`         | no       | `brawler_fact_load`   | watermark row to use             |
 
 Both URLs use the `postgresql://user:pass@host:port/dbname` form. Supabase
-exposes a pooler URL at `<project>/supabase/.temp/pooler-url`.
+exposes a pooler URL in **Dashboard → Project Settings → Database →
+Connection String** (use the "Transaction" pooler, port 6543).
+
+`config.py` reads from `os.environ` at runtime. Two ways to populate it:
+
+- **Local dev** — copy `etl/.env.example` to `etl/.env` and fill in. The
+  config module auto-loads `etl/.env` via `python-dotenv` if installed.
+  `.env` is gitignored.
+- **Lambda** — set them in the function's environment variables config in
+  the AWS console / IaC. No `.env` file ships in the zip.
+
+The `.env` file is just a convenience for local runs. The Python code
+doesn't care where the env vars come from.
 
 ## Local run
 
+Two separate environment concepts here, don't conflate them:
+
+1. **Python `venv`** — isolates installed packages (`pg8000`, `python-dotenv`).
+   Does NOT carry your DB credentials.
+2. **`.env` file** — holds your DB URLs and is read at runtime by `config.py`.
+   Does NOT manage Python packages.
+
 ```powershell
 cd player-analytics\etl
+
+# 1. Python venv for package isolation (one-time setup)
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
-$env:SOURCE_DB_URL = "<OLTP pooler url>"
-$env:TARGET_DB_URL = "<analytics pooler url>"
+# 2. Credentials via .env file (one-time per machine)
+copy .env.example .env
+# now edit .env, paste the real SOURCE_DB_URL and TARGET_DB_URL
+
+# 3. Run
+cd ..
 python -m etl.handler
 ```
 
 You should see one line per batch (`batch N: M rows, watermark=…`) and a
 `done: { … }` summary at the end. Re-running immediately should print
 `done: { batches: 0, rows: 0, … }` — the watermark already covers everything.
+
+If you'd rather skip the `.env` file, just export the vars before running:
+
+```powershell
+$env:SOURCE_DB_URL = "..."
+$env:TARGET_DB_URL = "..."
+python -m etl.handler
+```
 
 ## Tests
 
@@ -64,7 +97,7 @@ is the SQL checklist in the planning doc.
 ```bash
 # from player-analytics/etl
 pip install -r requirements.txt -t .
-zip -r ../etl.zip . -x '*.pyc' '__pycache__/*' '.venv/*' 'tests/*'
+zip -r ../etl.zip . -x '*.pyc' '__pycache__/*' '.venv/*' 'tests/*' '.env' '.env.example'
 ```
 
 Upload `etl.zip` to a Python 3.12 Lambda. Set:

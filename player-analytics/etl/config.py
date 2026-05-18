@@ -2,12 +2,24 @@
 
 All values resolved lazily via `Config.load()` so that tests can construct
 their own configs without touching `os.environ`.
+
+Locally, a `.env` file next to this package is auto-loaded if
+`python-dotenv` is installed. On Lambda the env vars come from the function
+configuration; `python-dotenv` is optional and just no-ops if missing.
 """
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.parse import urlparse
+
+try:
+    from dotenv import load_dotenv
+    # Look for .env in the etl/ package dir and walk up. Silent if not found.
+    load_dotenv(Path(__file__).parent / ".env")
+except ImportError:
+    pass
 
 
 @dataclass(frozen=True)
