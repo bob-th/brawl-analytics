@@ -3,36 +3,6 @@ import type { FormattedBattle, FormattedPlayer } from '../types/battle.ts';
 import { getModeId } from './modeMap.ts';
 import { computeBattleId } from './battleId.ts';
 
-type ParticipantWithTeam = {
-  player: RawPlayer;
-  teamIdx: number | null; // null for solo-showdown flat list
-  flatIdx: number;        // 0-based index in flat / players[] for showdown
-};
-
-function collectParticipantsWithTeams(raw: RawBattle): ParticipantWithTeam[] {
-  if (raw.battle.teams) {
-    let flatIdx = 0;
-    return raw.battle.teams.flatMap((team, teamIdx) =>
-      team.map(p => ({ player: p, teamIdx, flatIdx: flatIdx++ })),
-    );
-  }
-  if (raw.battle.players) {
-    return raw.battle.players.map((p, i) => ({
-      player: p, teamIdx: null, flatIdx: i,
-    }));
-  }
-  return [];
-}
-
-function teamModePlacement(
-  queryResult: 'victory' | 'defeat' | 'draw',
-  sameTeam: boolean,
-): number {
-  if (queryResult === 'draw') return -1;
-  const queryPlacement = queryResult === 'victory' ? 1 : 0;
-  return sameTeam ? queryPlacement : 1 - queryPlacement;
-}
-
 function toFormattedPlayer(
   p: RawPlayer,
   placement: number | null,
@@ -52,6 +22,14 @@ function normTag(t: string): string {
   return t.toUpperCase().replace(/^#/, '');
 }
 
+function teamModePlacement(
+  queryResult: 'victory' | 'defeat' | 'draw',
+  sameTeam: boolean,
+): number {
+  if (queryResult === 'draw') return -1;
+  const queryPlacement = queryResult === 'victory' ? 1 : 0;
+  return sameTeam ? queryPlacement : 1 - queryPlacement;
+}
 // Returns null for ranked matches (no trophyChange) so they can be dropped.
 // totalTrophies is filled in by the caller after ranked matches are stripped.
 function formatBattle(
@@ -62,41 +40,45 @@ function formatBattle(
 
   const isShowdown = raw.battle.mode.toLowerCase().includes('showdown');
   const isSoloShowdown = !!raw.battle.players && !raw.battle.teams;
-
-  const participants = collectParticipantsWithTeams(raw);
-  const tags = participants.map(x => x.player.tag);
-  const battleId = computeBattleId(tags, raw.battleTime);
+  
+  const participants = isSoloShowdown ? [raw.battle.players] : raw.battle.teams
 
   const normQ = normTag(queryPlayerTag);
 
+  if(participants === undefined || participants[0] == undefined){
+    console.log("undefined participants")
+    return null
+  }
+ 
   let players: FormattedPlayer[];
+
   if (isSoloShowdown) {
     // Solo showdown: position in players[] is the finish placement.
-    players = participants.map(({ player, flatIdx }) =>
-      toFormattedPlayer(player, flatIdx + 1),
+    players = participants[0].map((player, index) =>
+      toFormattedPlayer(player, index),
     );
   } else if (isShowdown) {
     // Showdown duo (or any teams-based showdown): teamIdx is the team's
     // finish position. All members of the team share that placement.
-    players = participants.map(({ player, teamIdx }) =>
-      toFormattedPlayer(player, teamIdx === null ? null : teamIdx + 1),
-    );
+    players = []
+
+    for(let i = 0; i < participants.length; i++){
+      players.push(...participants[i]!.map((player) => toFormattedPlayer(player, i)));
+    }
   } else {
     // Team modes: derive from queried player's result + team membership.
-    const queryPart = participants.find(x => normTag(x.player.tag) === normQ);
-    const queryTeam = queryPart?.teamIdx ?? null;
+    players = []
+
+    const teamIdx = participants[0]!.find((x) => normTag(x.tag) === normQ) !== undefined ? 0 : 1;
     const queryResult = raw.battle.result ?? null;
-    players = participants.map(({ player, teamIdx }) => {
-      if (queryResult === null || queryTeam === null || teamIdx === null) {
-        return toFormattedPlayer(player, null);
-      }
-      return toFormattedPlayer(
-        player,
-        teamModePlacement(queryResult, teamIdx === queryTeam),
-      );
-    });
+    if (queryResult == null) return null
+    for(let i = 0; i < participants.length; i++){ 
+      players.push(...participants[i]!.map((player) => toFormattedPlayer(player, teamModePlacement(queryResult, teamIdx == i))));
+    }
   }
 
+  const tags = players.map(player => player.playerTag);
+  const battleId = computeBattleId(tags, raw.battleTime);
   return {
     battleId,
     battleTime: raw.battleTime,
