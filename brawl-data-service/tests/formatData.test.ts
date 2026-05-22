@@ -119,7 +119,7 @@ describe('formatBattleLog', () => {
     }
   });
 
-  it('leaves placement null on every player when raw.battle.result is missing on a team mode', () => {
+  it('drops a team-mode battle when raw.battle.result is missing', () => {
     const noResultSample: RawBattleLog = {
       items: sample.items.map(item =>
         item.battle.mode === 'hotZone'
@@ -128,10 +128,7 @@ describe('formatBattleLog', () => {
       ),
     };
     const out = formatBattleLog(noResultSample, CURRENT_TROPHIES, QUERY_TAG);
-    const team = out.find(b => b.mode === 'hotZone')!;
-    for (const p of team.players) {
-      assert.equal(p.placement, null);
-    }
+    assert.equal(out.find(b => b.mode === 'hotZone'), undefined);
   });
 
   it('produces the same battleId regardless of which player viewed the battle', () => {

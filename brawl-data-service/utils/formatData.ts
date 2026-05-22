@@ -55,7 +55,7 @@ function formatBattle(
   if (isSoloShowdown) {
     // Solo showdown: position in players[] is the finish placement.
     players = participants[0].map((player, index) =>
-      toFormattedPlayer(player, index),
+      toFormattedPlayer(player, index + 1),
     );
   } else if (isShowdown) {
     // Showdown duo (or any teams-based showdown): teamIdx is the team's
@@ -63,12 +63,13 @@ function formatBattle(
     players = []
 
     for(let i = 0; i < participants.length; i++){
-      players.push(...participants[i]!.map((player) => toFormattedPlayer(player, i)));
+      players.push(...participants[i]!.map((player) => toFormattedPlayer(player, i + 1)));
     }
   } else {
     // Team modes: derive from queried player's result + team membership.
     players = []
 
+    // Assumes exactly 2 teams: if query player isn't in team 0, treat as team 1.
     const teamIdx = participants[0]!.find((x) => normTag(x.tag) === normQ) !== undefined ? 0 : 1;
     const queryResult = raw.battle.result ?? null;
     if (queryResult == null) return null
