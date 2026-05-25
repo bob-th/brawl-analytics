@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "tsx watch index.js",
     "start": "tsx index.js",
+    "local": "tsx local.js",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts"
   },
@@ -20,9 +21,11 @@
     "typescript": "^5.6.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.52.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "node-cron": "^4.2.0",
+    "p-limit": "^6.2.0",
     "tsx": "^4.19.0"
   }
 }
