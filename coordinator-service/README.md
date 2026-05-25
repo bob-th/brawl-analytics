@@ -8,8 +8,6 @@ fetch-and-write step.
 
 ## Layout
 
-The AWS surface is isolated from the business logic so neither half is coupled
-to the other:
 
 | File             | Responsibility                                                                 |
 | ---------------- | ------------------------------------------------------------------------------ |
