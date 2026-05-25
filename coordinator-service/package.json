@@ -1,0 +1,21 @@
+{
+  "name": "coordinator-service",
+  "version": "1.0.0",
+  "main": "aws.js",
+  "scripts": {
+    "start": "node local.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Schedules battle-sync work: reads tracked player tags and enqueues them to SQS in batches for the brawl-data-service to consume.",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.654.0",
+    "@supabase/supabase-js": "^2.52.0"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.0"
+  }
+}
