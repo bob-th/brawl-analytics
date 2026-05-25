@@ -108,7 +108,7 @@ export async function getPlayerBattles(playerTag) {
   const dbRows = dbR.status === "fulfilled" ? dbR.value : [];
   const dsCanonical = rawDsBattles.map(dsToCanonicalFullLog);
 
-  const { merged, newFromDs } = mergeByBattleId(dbRows, dsCanonical);
+  const { merged } = mergeByBattleId(dbRows, dsCanonical);
 
   const payload = {
     playerTag,
@@ -120,17 +120,7 @@ export async function getPlayerBattles(playerTag) {
     })),
   };
 
-  // Only persist when both sources succeeded — avoids re-upserting the world
-  // during a sustained DB outage.
-  const bothSucceeded =
-    dsR.status === "fulfilled" && dbR.status === "fulfilled";
-  const newDsBattleIds = new Set(newFromDs.map((r) => r.battleId));
-  const dsBattlesForWrite =
-    bothSucceeded && newFromDs.length > 0
-      ? rawDsBattles.filter((b) => newDsBattleIds.has(b.battleId))
-      : null;
-
-  return { payload, dsBattlesForWrite };
+  return payload;
 }
 
 // DS only ever returns the ~25 newest battles, so unifying with DS is only
@@ -145,14 +135,11 @@ export async function getRecentBattles(playerTag, limit, offset) {
     const dbRows = await fetchRecentBattles(playerTag, limit, offset);
     const sliced = dbRows.slice(0, limit);
     return {
-      payload: {
-        playerTag,
-        limit,
-        offset,
-        battles: sliced.map(formatRecentBattle),
-        intervals: computeIntervals(sliced),
-      },
-      dsBattlesForWrite: null,
+      playerTag,
+      limit,
+      offset,
+      battles: sliced.map(formatRecentBattle),
+      intervals: computeIntervals(sliced),
     };
   }
 
@@ -172,7 +159,7 @@ export async function getRecentBattles(playerTag, limit, offset) {
     .map((b) => dsToCanonicalRecentBattle(b, playerTag))
     .filter(Boolean);
 
-  const { merged, newFromDs } = mergeByBattleId(dbRows, dsCanonical);
+  const { merged } = mergeByBattleId(dbRows, dsCanonical);
   const sliced = merged.slice(0, limit);
 
   const payload = {
@@ -183,17 +170,7 @@ export async function getRecentBattles(playerTag, limit, offset) {
     intervals: computeIntervals(sliced),
   };
 
-  // Same write-gate logic as getPlayerBattles: only persist when both sources
-  // succeeded so a sustained DB outage doesn't trigger a re-upsert storm.
-  const bothSucceeded =
-    dsR.status === "fulfilled" && dbR.status === "fulfilled";
-  const newDsBattleIds = new Set(newFromDs.map((r) => r.battleId));
-  const dsBattlesForWrite =
-    bothSucceeded && newFromDs.length > 0
-      ? rawDsBattles.filter((b) => newDsBattleIds.has(b.battleId))
-      : null;
-
-  return { payload, dsBattlesForWrite };
+  return payload;
 }
 
 // Same DS-overlap pattern as getRecentBattles: page 0 unifies DS with DB and
@@ -206,15 +183,12 @@ export async function getPlayerBrawlerBattles(playerTag, brawlerId, limit, offse
     const dbRows = await fetchPlayerBrawlerBattles(playerTag, brawlerId, limit, offset);
     const sliced = dbRows.slice(0, limit);
     return {
-      payload: {
-        playerTag,
-        brawler: brawlerId,
-        limit,
-        offset,
-        battles: sliced.map(formatRecentBattle),
-        intervals: computeIntervals(sliced),
-      },
-      dsBattlesForWrite: null,
+      playerTag,
+      brawler: brawlerId,
+      limit,
+      offset,
+      battles: sliced.map(formatRecentBattle),
+      intervals: computeIntervals(sliced),
     };
   }
 
@@ -247,13 +221,5 @@ export async function getPlayerBrawlerBattles(playerTag, brawlerId, limit, offse
     intervals: computeIntervals(sliced),
   };
 
-  // Endpoint 2's DB query is brawler-filtered, so we can't cheaply compute
-  // which DS battles are truly new. Hand the writer the full raw set and let
-  // ON CONFLICT DO NOTHING handle dedup at the DB layer.
-  const bothSucceeded =
-    dsR.status === "fulfilled" && dbR.status === "fulfilled";
-  const dsBattlesForWrite =
-    bothSucceeded && rawDsBattles.length > 0 ? rawDsBattles : null;
-
-  return { payload, dsBattlesForWrite };
+  return payload;
 }
