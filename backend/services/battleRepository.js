@@ -1,8 +1,6 @@
 import { supabase } from "../database.js";
 
-// Endpoint 1: full battle log. `trophies` is now a column on battle_log itself
-// (see migration 20260423000000_collapse_trophies_store), so a single query
-// covers everything we need — no client-side zip.
+// Endpoint 1: full battle log.
 export async function fetchPlayerBattles(playerTag) {
   const { data, error } = await supabase
     .from("battle_log")
@@ -22,8 +20,7 @@ export async function fetchPlayerBattles(playerTag) {
 
 // Endpoint 2: per-brawler battle log. Reads from `detailed_battle_log` (the
 // same view backing fetchRecentBattles), filtered to the player's battles
-// with the target brawler. Returns the same rich row shape as
-// fetchRecentBattles so the brawler chart can reuse the recent-battles UI.
+// with the target brawler. 
 export async function fetchPlayerBrawlerBattles(playerTag, brawlerId, limit, offset) {
   let query = supabase
     .from("detailed_battle_log")
