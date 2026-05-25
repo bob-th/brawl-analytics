@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "tsx watch index.js",
     "start": "tsx index.js",
+    "local": "tsx local.js",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts"
   },
@@ -14,15 +15,18 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
     "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
     "nodemon": "^3.1.10",
     "typescript": "^5.6.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.52.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "node-cron": "^4.2.0",
+    "p-limit": "^6.2.0",
     "tsx": "^4.19.0"
   }
 }
