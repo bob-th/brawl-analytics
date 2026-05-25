@@ -5,14 +5,18 @@ local runs do `python -m etl.handler`.
 """
 from __future__ import annotations
 
-from .config import Config
-from .db import connect
-from .pipeline import run_etl
+from config import Config
+from db import connect
+from pipeline import run_etl
 
 
 def main() -> dict:
     cfg = Config.load()
-    with connect(cfg.source_db_url) as src, connect(cfg.target_db_url) as tgt:
+    with connect(
+        cfg.source_db_url, ssl_mode=cfg.ssl_mode, ssl_root_cert=cfg.ssl_root_cert
+    ) as src, connect(
+        cfg.target_db_url, ssl_mode=cfg.ssl_mode, ssl_root_cert=cfg.ssl_root_cert
+    ) as tgt:
         summary = run_etl(src, tgt, cfg)
     print(f"done: {summary}")
     return summary

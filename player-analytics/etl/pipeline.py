@@ -1,8 +1,8 @@
 """End-to-end ETL orchestration: extract → transform → load, in batches."""
 from __future__ import annotations
 
-from . import extract, load, transform
-from .config import Config
+import extract, load, transform
+from config import Config
 
 
 def run_etl(src_conn, tgt_conn, cfg: Config) -> dict:
