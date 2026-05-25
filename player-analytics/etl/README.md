@@ -27,10 +27,27 @@ etl/
 | `BATCH_SIZE`      | no       | `1000`                | rows per extract → load cycle    |
 | `MAX_BATCHES`     | no       | `0` (unlimited)       | safety cap per invocation        |
 | `ETL_KEY`         | no       | `brawler_fact_load`   | watermark row to use             |
+| `DB_SSL_MODE`     | no       | `require`             | `require` (encrypt only) or `verify-full` |
+| `DB_SSL_ROOT_CERT`| no       | —                     | CA cert path; required for `verify-full`  |
 
 Both URLs use the `postgresql://user:pass@host:port/dbname` form. Supabase
 exposes a pooler URL in **Dashboard → Project Settings → Database →
 Connection String** (use the "Transaction" pooler, port 6543).
+
+> **Passwords with special characters must be percent-encoded** in the URL
+> (`@` → `%40`, `#` → `%23`, `/` → `%2F`, `:` → `%3A`). Otherwise `urlparse`
+> mangles the host/user split. The code percent-*decodes* user/password
+> back, so the DB still receives the literal password.
+
+### TLS / `DB_SSL_MODE`
+
+Supabase's certs (direct and pooler) chain to a Supabase-internal root that
+isn't in the public trust store, so the default `require` mode encrypts the
+connection but skips cert verification — this is what avoids the
+`CERTIFICATE_VERIFY_FAILED: self-signed certificate in certificate chain`
+error. For authenticated TLS, download the CA cert from **Dashboard →
+Project Settings → Database → SSL Configuration**, set
+`DB_SSL_ROOT_CERT=/path/to/cert` and `DB_SSL_MODE=verify-full`.
 
 `config.py` reads from `os.environ` at runtime. Two ways to populate it:
 

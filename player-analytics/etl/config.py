@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 try:
     from dotenv import load_dotenv
@@ -29,6 +29,8 @@ class Config:
     batch_size: int
     max_batches: int  # 0 means unlimited
     etl_key: str
+    ssl_mode: str            # "require" (encrypt, no verify) or "verify-full"
+    ssl_root_cert: str | None  # path to CA cert; only used by "verify-full"
 
     @classmethod
     def load(cls) -> "Config":
@@ -38,6 +40,8 @@ class Config:
             batch_size=int(os.environ.get("BATCH_SIZE", "1000")),
             max_batches=int(os.environ.get("MAX_BATCHES", "0")),
             etl_key=os.environ.get("ETL_KEY", "brawler_fact_load"),
+            ssl_mode=os.environ.get("DB_SSL_MODE", "require"),
+            ssl_root_cert=os.environ.get("DB_SSL_ROOT_CERT") or None,
         )
 
 
@@ -55,10 +59,13 @@ def parse_db_url(url: str) -> dict:
         raise ValueError(f"unsupported db url scheme: {parsed.scheme!r}")
     if not parsed.hostname or not parsed.username:
         raise ValueError("db url missing host or user")
+    # urlparse does NOT percent-decode these, so unquote() them. Special chars
+    # in the password (@, #, /, etc.) MUST be percent-encoded in the URL or
+    # urlparse mangles the host/user split — e.g. `#` would start a fragment.
     return {
         "host": parsed.hostname,
         "port": parsed.port or 5432,
-        "database": (parsed.path or "/").lstrip("/") or "postgres",
-        "user": parsed.username,
-        "password": parsed.password or "",
+        "database": unquote((parsed.path or "/").lstrip("/")) or "postgres",
+        "user": unquote(parsed.username),
+        "password": unquote(parsed.password) if parsed.password else "",
     }
