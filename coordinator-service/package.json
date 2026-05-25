@@ -12,10 +12,10 @@
   "license": "ISC",
   "description": "Schedules battle-sync work: reads tracked player tags and enqueues them to SQS in batches for the brawl-data-service to consume.",
   "dependencies": {
-    "@aws-sdk/client-sqs": "^3.654.0",
     "@supabase/supabase-js": "^2.52.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-sqs": "^3.654.0",
     "dotenv": "^17.2.0"
   }
 }
