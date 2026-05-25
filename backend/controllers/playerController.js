@@ -5,7 +5,6 @@ import {
   getPlayerBrawlerBattles,
   getRecentBattles,
 } from "../services/battleService.js";
-import { persistNewBattles } from "../services/battleWriter.js";
 import { getPlayerMetrics } from "../services/metricsService.js";
 import { isValidTag, normalizeTag } from "../utils/brawl.js";
 
@@ -20,16 +19,8 @@ const controller = {
         return res.status(400).json({ error: "Invalid or missing playerTag." });
       }
 
-      const { payload, dsBattlesForWrite } = await getPlayerBattles(playerTag);
+      const payload = await getPlayerBattles(playerTag);
       res.json(payload);
-
-      if (dsBattlesForWrite) {
-        setImmediate(() =>
-          persistNewBattles(playerTag, dsBattlesForWrite).catch((err) =>
-            console.error("async persist failed:", err)
-          )
-        );
-      }
     } catch (err) {
       console.error("getPlayerBattlesUnified failed:", err);
       return res.status(502).json({ error: "failed to fetch battles" });
@@ -61,21 +52,13 @@ const controller = {
         return res.status(400).json({ error: "invalid offset" });
       }
 
-      const { payload, dsBattlesForWrite } = await getPlayerBrawlerBattles(
+      const payload = await getPlayerBrawlerBattles(
         playerTag,
         brawlerId,
         limit,
         offset
       );
       res.json(payload);
-
-      if (dsBattlesForWrite) {
-        setImmediate(() =>
-          persistNewBattles(playerTag, dsBattlesForWrite).catch((err) =>
-            console.error("async persist failed:", err)
-          )
-        );
-      }
     } catch (err) {
       console.error("getPlayerBrawlerBattles failed:", err);
       return res.status(502).json({ error: "failed to fetch brawler battles" });
@@ -140,20 +123,12 @@ const controller = {
       const limit = Math.min(parsedLimit, RECENT_BATTLES_MAX_LIMIT);
       const offset = parsedOffset;
 
-      const { payload, dsBattlesForWrite } = await getRecentBattles(
+      const payload = await getRecentBattles(
         playerTag,
         limit,
         offset
       );
       res.json(payload);
-
-      if (dsBattlesForWrite) {
-        setImmediate(() =>
-          persistNewBattles(playerTag, dsBattlesForWrite).catch((err) =>
-            console.error("async persist failed:", err)
-          )
-        );
-      }
     } catch (err) {
       console.error("getRecentBattles failed:", err);
       return res.status(502).json({ error: "failed to fetch recent battles" });

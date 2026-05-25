@@ -172,9 +172,10 @@ The two unified endpoints (`/battles`, `/brawlers/:id/battles`,
 4. Merge by `battleId` (DB wins on conflict — already-stored data is
    authoritative).
 5. Format the merged list for the response.
-6. After responding, fire-and-forget `persistNewBattles` for any DS battles
-   that weren't already in the DB. Only runs when **both** sources succeeded
-   — avoids re-upserting the world during a sustained DB outage.
+
+The read endpoints never write. They hit the data service only to merge fresh
+battles into the response; all persistence happens in the background sync
+(below).
 
 `recent-battles` adds one wrinkle: pagination. The Brawl Stars API only ever
 returns the ~25 newest battles, so DS unification is only useful for page 1.
@@ -189,9 +190,8 @@ straight from the DB.
 2. For each, fetch the data service's battle log and upsert into the DB.
 3. Errors on one tag are logged and don't halt the rest.
 
-This is what backfills the historical data beyond the Brawl Stars API's
-~25-battle window. The opportunistic `persistNewBattles` calls from the
-unified endpoints supplement it for active users between cron ticks.
+This is the only path that writes battles to the DB, and it backfills the
+historical data beyond the Brawl Stars API's ~25-battle window.
 
 ### Environment variables
 
