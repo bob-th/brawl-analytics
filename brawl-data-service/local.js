@@ -7,7 +7,7 @@
 // Run via tsx so the .ts imports resolve:
 //   npm run local -- "#TAG1" "#TAG2"
 // or (no args) it falls back to the SAMPLE_TAGS list below.
-import 'dotenv/config';
+import './loadEnv.js';
 import { processTagBatch } from './services/batchProcessor.ts';
 
 // Replace with real tags for an end-to-end smoke test, or pass them as CLI args.

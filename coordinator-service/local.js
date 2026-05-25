@@ -2,7 +2,7 @@
 // never bundled into the Lambda) and runs the handler once, mirroring what an
 // EventBridge schedule does in production. Not used by Lambda — Lambda invokes
 // `aws.handler` directly and reads env vars from its own configuration.
-import "dotenv/config";
+import "./loadEnv.js";
 import { handler } from "./aws.js";
 
 handler()

@@ -1,12 +1,12 @@
+import './loadEnv.js';
 import express from "express";
-import dotenv from 'dotenv/config';
 
 import playerRouter from "./routes/playerRouter.js";
 import userRouter from "./routes/userRouter.js";
 import cors from "cors";
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.BACKEND_PORT;
 
 app.use(express.json());
 app.use(cors({

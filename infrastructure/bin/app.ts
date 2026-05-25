@@ -1,10 +1,17 @@
 #!/usr/bin/env node
+import * as path from 'node:path';
+import * as dotenv from 'dotenv';
 import * as cdk from 'aws-cdk-lib';
 import { NetworkStack } from '../lib/stacks/network-stack';
 import { environments } from '../config/environments';
 // Scaffolded for later — uncomment as the stacks are implemented:
 // import { ComputeStack } from '../lib/stacks/compute-stack';
 // import { LambdaStack } from '../lib/stacks/lambda-stack';
+
+// Load the shared environment file (infrastructure/.env, one level up from
+// bin/). These values become available to stacks below — e.g. to inject into
+// Lambda/EC2 environment configuration once those stacks define resources.
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = new cdk.App();
 
