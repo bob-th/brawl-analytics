@@ -39,6 +39,7 @@ export async function persistNewBattles(queryPlayerTag, dsBattles) {
         brawler: p.brawlerId,
         brawler_trophies: p.trophies,
         battle_id: b.battleId,
+        placement: p.placement ?? null,
       });
     }
   }

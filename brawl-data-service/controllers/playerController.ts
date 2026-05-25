@@ -68,7 +68,7 @@ const controller = {
 
     const rawPlayer = (await playerRes.json()) as RawPlayerInfo;
     const rawLog = (await battleLogRes.json()) as RawBattleLog;
-    const battles = formatBattleLog(rawLog, rawPlayer.trophies);
+    const battles = formatBattleLog(rawLog, rawPlayer.trophies, rawPlayer.tag);
     return res.json({ battles });
   },
 };
