@@ -61,9 +61,12 @@ export class EtlStack extends cdk.Stack {
       // 15 min is the Lambda hard ceiling. The ETL drains to exhaustion, so cap
       // a single invocation with the MAX_BATCHES env var if runs grow long.
       timeout: cdk.Duration.minutes(15),
-      // Serialize runs: reserved concurrency 1 stops a slow invocation from
-      // overlapping the next schedule tick and double-processing the watermark.
-      reservedConcurrentExecutions: 10,
+      // No reserved concurrency: this account's Lambda concurrency limit is too
+      // low to reserve any (Lambda keeps a minimum of 10 unreserved). It isn't
+      // needed for correctness — the schedule fires once daily and the ETL is
+      // idempotent (watermark advance + fact insert share one txn; inserts are
+      // ON CONFLICT DO NOTHING), so even an overlapping run replays cleanly.
+      // Request a Lambda concurrency quota increase to restore a hard guard.
       environment: {
         SOURCE_DB_URL: secrets.sourceDbUrl,
         TARGET_DB_URL: secrets.targetDbUrl,
