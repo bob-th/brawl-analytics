@@ -63,7 +63,7 @@ export class EtlStack extends cdk.Stack {
       timeout: cdk.Duration.minutes(15),
       // Serialize runs: reserved concurrency 1 stops a slow invocation from
       // overlapping the next schedule tick and double-processing the watermark.
-      reservedConcurrentExecutions: 1,
+      reservedConcurrentExecutions: 10,
       environment: {
         SOURCE_DB_URL: secrets.sourceDbUrl,
         TARGET_DB_URL: secrets.targetDbUrl,
