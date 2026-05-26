@@ -90,13 +90,19 @@ def transform_row(
     map_name = row["map"]
     battle_dim_key = battle_dim_cache[(name, map_name)]
 
+    # Per-player overall_trophies is only known for the queried player (others
+    # have no battle_log row). Fall back to the battle's rough trophy level
+    # (battle_info.battle_level) so non-targeted participants still get a band.
+    overall = row.get("overall_trophies")
+    band_value = overall if overall is not None else row.get("battle_level")
+
     return (
         row["player_tag"],
         row["battle_id"],
         date_key_from(row["battle_time"]),
         brawler_key,
         battle_dim_key,
-        find_band(row.get("overall_trophies"), trophy_bands),
+        find_band(band_value, trophy_bands),
         find_band(row["brawler_trophies"], brawler_trophy_bands),
         row["battle_time"],
         row.get("placement"),

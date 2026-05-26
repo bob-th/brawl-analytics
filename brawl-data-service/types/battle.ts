@@ -25,6 +25,10 @@ export interface FormattedBattle {
   // Player's total trophies immediately after this battle resolved.
   // Reconstructed from current trophies by walking battles newest -> oldest.
   totalTrophies: number;
+  // Rough trophy level of the battle, persisted 1:1 onto battle_info.battle_level.
+  // Currently just the queried player's total trophies after the battle; the
+  // formula is expected to be refined later, so it lives behind its own field.
+  battleLevel: number;
   isShowdown: boolean;
   // Exactly one of these is set: result for team modes, rank for showdown.
   result: 'victory' | 'defeat' | 'draw' | null;

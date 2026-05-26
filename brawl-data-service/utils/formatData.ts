@@ -31,11 +31,12 @@ function teamModePlacement(
   return sameTeam ? queryPlacement : 1 - queryPlacement;
 }
 // Returns null for ranked matches (no trophyChange) so they can be dropped.
-// totalTrophies is filled in by the caller after ranked matches are stripped.
+// totalTrophies and battleLevel are filled in by the caller after ranked
+// matches are stripped.
 function formatBattle(
   raw: RawBattle,
   queryPlayerTag: string,
-): Omit<FormattedBattle, 'totalTrophies'> | null {
+): Omit<FormattedBattle, 'totalTrophies' | 'battleLevel'> | null {
   if (raw.battle.trophyChange === undefined) return null;
 
   const isShowdown = raw.battle.mode.toLowerCase().includes('showdown');
@@ -105,12 +106,14 @@ export function formatBattleLog(
 ): FormattedBattle[] {
   const cleaned = raw.items
     .map(item => formatBattle(item, queryPlayerTag))
-    .filter((b): b is Omit<FormattedBattle, 'totalTrophies'> => b !== null);
+    .filter((b): b is Omit<FormattedBattle, 'totalTrophies' | 'battleLevel'> => b !== null);
 
   let running = currentTrophies;
   const out: FormattedBattle[] = [];
   for (const b of cleaned) {
-    out.push({ totalTrophies: running, ...b });
+    // battleLevel == totalTrophies for now; kept as a distinct field so the
+    // estimate's formula can be refined without overloading totalTrophies.
+    out.push({ totalTrophies: running, battleLevel: running, ...b });
     running -= b.trophyChange;
   }
   return out;

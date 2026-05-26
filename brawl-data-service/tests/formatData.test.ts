@@ -185,4 +185,12 @@ describe('formatBattleLog', () => {
       assert.equal(curr.totalTrophies, prev.totalTrophies - prev.trophyChange);
     }
   });
+
+  it('sets battleLevel equal to totalTrophies for each battle', () => {
+    const out = formatBattleLog(sample, CURRENT_TROPHIES, QUERY_TAG);
+    assert.ok(out.length >= 2, 'sample should retain at least 2 battles');
+    for (const b of out) {
+      assert.equal(b.battleLevel, b.totalTrophies);
+    }
+  });
 });

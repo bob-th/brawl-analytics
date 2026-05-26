@@ -26,6 +26,7 @@ export async function persistNewBattles(
       battle_id: b.battleId,
       mode_id: b.modeId,
       map: b.map,
+      battle_level: b.battleLevel,
     });
 
     logRows.push({
