@@ -1,6 +1,9 @@
 import { supabase } from '../database.ts';
-import { brawlTimeToIso } from '../utils/time.ts';
+import { buildBatchRows } from './battleRows.ts';
+import type { BattleGroup } from './battleRows.ts';
 import type { FormattedBattle } from '../types/battle.ts';
+
+export type { BattleGroup } from './battleRows.ts';
 
 // Persists formatted battles that aren't yet in the DB. Expands per the schema:
 //   battle_info            : 1 row per battle
@@ -9,55 +12,28 @@ import type { FormattedBattle } from '../types/battle.ts';
 // All upserts use ON CONFLICT DO NOTHING — battles are immutable once written,
 // so re-running for the same tag is a safe no-op. Ported from the backend's
 // services/battleWriter.js.
-export async function persistNewBattles(
-  queryPlayerTag: string,
-  battles: FormattedBattle[],
+//
+// Batches every group passed in into a single upsert per table, so one SQS
+// message (≤25 tags) costs three DB round-trips total instead of three per tag.
+// Row building and the cross-player de-duplication that batching requires live
+// in buildBatchRows (pure, O(N), unit-tested); here we just run the upserts.
+export async function persistNewBattlesBatch(
+  groups: BattleGroup[],
 ): Promise<void> {
-  if (!battles || battles.length === 0) return;
+  const { infoRows, logRows, brawlerTrophiesRows } = buildBatchRows(groups);
 
-  const infoRows = [];
-  const logRows = [];
-  const brawlerTrophiesRows = [];
-
-  for (const b of battles) {
-    const battleTimeIso = brawlTimeToIso(b.battleTime);
-
-    infoRows.push({
-      battle_id: b.battleId,
-      mode_id: b.modeId,
-      map: b.map,
-      battle_level: b.battleLevel,
-    });
-
-    logRows.push({
-      player_tag: queryPlayerTag,
-      battle_time: battleTimeIso,
-      battle_id: b.battleId,
-      result: b.result,
-      rank: b.rank,
-      trophy_change: b.trophyChange ?? 0,
-      trophies: b.totalTrophies,
-    });
-
-    for (const p of b.players ?? []) {
-      brawlerTrophiesRows.push({
-        player_tag: p.playerTag,
-        battle_time: battleTimeIso,
-        brawler: p.brawlerId,
-        brawler_trophies: p.trophies,
-        battle_id: b.battleId,
-        placement: p.placement ?? null,
-      });
-    }
-  }
+  if (infoRows.length === 0) return;
 
   // battle_info first (parent FK). Abort child writes if this fails — child
-  // rows would violate the FK.
+  // rows would violate the FK. Logged rather than thrown: one write now spans
+  // many tags and the coordinator re-enqueues every tick, so a failure
+  // self-heals instead of sinking the whole message.
   const infoRes = await supabase
     .from('battle_info')
     .upsert(infoRows, { onConflict: 'battle_id', ignoreDuplicates: true });
   if (infoRes.error) {
-    throw new Error(`battle_info upsert failed: ${infoRes.error.message}`);
+    console.error(`battle_info upsert failed: ${infoRes.error.message}`);
+    return;
   }
 
   const [logRes, brawlerRes] = await Promise.allSettled([
@@ -85,4 +61,14 @@ export async function persistNewBattles(
       console.error(`${name} upsert error:`, res.value.error);
     }
   }
+}
+
+// Single-tag convenience wrapper, kept for API compatibility with the original
+// per-tag write path. Delegates to the batched writer with one group.
+export async function persistNewBattles(
+  queryPlayerTag: string,
+  battles: FormattedBattle[],
+): Promise<void> {
+  if (!battles || battles.length === 0) return;
+  await persistNewBattlesBatch([{ queryPlayerTag, battles }]);
 }
