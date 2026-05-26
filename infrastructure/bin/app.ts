@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 import * as cdk from 'aws-cdk-lib';
 import { NetworkStack } from '../lib/stacks/network-stack';
 import { LambdaStack } from '../lib/stacks/lambda-stack';
+import { EtlStack } from '../lib/stacks/etl-stack';
 import { environments } from '../config/environments';
 // Scaffolded for later — uncomment as the stack is implemented:
 // import { ComputeStack } from '../lib/stacks/compute-stack';
@@ -50,6 +51,18 @@ new LambdaStack(app, 'BrawlAnalyticsLambdaStack', {
     supabaseServiceRoleKey: requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
     // The Lambda egresses the NAT IP, so it uses the key registered to that IP.
     brawlApiKey: requireEnv('LAMBDA_BS_DEV_KEY'),
+  },
+});
+
+// Scheduled analytics ETL (Python). Public egress only (Supabase pooler), so it
+// runs outside the VPC. Its daily trigger is an externally-owned EventBridge
+// Scheduler schedule whose target is set to this Lambda manually. Connection
+// URLs come from the shared infrastructure/.env loaded above.
+new EtlStack(app, 'BrawlAnalyticsEtlStack', {
+  env,
+  secrets: {
+    sourceDbUrl: requireEnv('SOURCE_DB_URL'),
+    targetDbUrl: requireEnv('TARGET_DB_URL'),
   },
 });
 
