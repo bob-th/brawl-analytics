@@ -1,0 +1,2 @@
+# Reusable CDK constructs go here (e.g. a shared bastion, a standard Lambda
+# wrapper). Keep stacks in lib/stacks and composable building blocks here.

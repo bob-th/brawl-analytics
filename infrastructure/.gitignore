@@ -1,0 +1,16 @@
+# Compiled JS output (we run via ts-node)
+*.js
+*.d.ts
+*.js.map
+
+# CDK
+.cdk.staging
+cdk.out
+
+# Dependencies
+node_modules
+
+# Env
+.env
+.env.*
+!.env.example

@@ -13,9 +13,15 @@ from pipeline import run_etl
 def main() -> dict:
     cfg = Config.load()
     with connect(
-        cfg.source_db_url, ssl_mode=cfg.ssl_mode, ssl_root_cert=cfg.ssl_root_cert
+        cfg.source_db_url,
+        ssl_mode=cfg.ssl_mode,
+        ssl_root_cert=cfg.ssl_root_cert,
+        connect_timeout=cfg.connect_timeout,
     ) as src, connect(
-        cfg.target_db_url, ssl_mode=cfg.ssl_mode, ssl_root_cert=cfg.ssl_root_cert
+        cfg.target_db_url,
+        ssl_mode=cfg.ssl_mode,
+        ssl_root_cert=cfg.ssl_root_cert,
+        connect_timeout=cfg.connect_timeout,
     ) as tgt:
         summary = run_etl(src, tgt, cfg)
     print(f"done: {summary}")

@@ -65,6 +65,7 @@ def run_etl(src_conn, tgt_conn, cfg: Config) -> dict:
         )
 
         if len(rows) < cfg.batch_size:
+            print("partial batch with", len(rows))
             break  # last partial batch — drained
 
     return {

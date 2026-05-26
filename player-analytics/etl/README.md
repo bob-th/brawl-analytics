@@ -29,10 +29,37 @@ etl/
 | `ETL_KEY`         | no       | `brawler_fact_load`   | watermark row to use             |
 | `DB_SSL_MODE`     | no       | `require`             | `require` (encrypt only) or `verify-full` |
 | `DB_SSL_ROOT_CERT`| no       | —                     | CA cert path; required for `verify-full`  |
+| `DB_CONNECT_TIMEOUT`| no     | `10`                  | socket connect timeout (s); fail fast not hang |
 
-Both URLs use the `postgresql://user:pass@host:port/dbname` form. Supabase
-exposes a pooler URL in **Dashboard → Project Settings → Database →
-Connection String** (use the "Transaction" pooler, port 6543).
+Both URLs use the `postgresql://user:pass@host:port/dbname` form.
+
+### Use the Supabase pooler (not the direct endpoint)
+
+Grab the URL from **Dashboard → Project Settings → Database → Connection
+String** and use the **pooler in _session_ mode** — the pooler host
+(`aws-0-<region>.pooler.supabase.com`) on **port 5432**:
+
+```
+postgresql://postgres.<project-ref>:<PASSWORD>@aws-0-<region>.pooler.supabase.com:5432/postgres
+```
+
+Two non-obvious requirements:
+
+- **Username carries the tenant:** it's `postgres.<project-ref>` (e.g.
+  `postgres.hqvhkwzgxioitufrwzgf`), not plain `postgres`. The pooler routes
+  by this.
+- **Session mode (5432), not transaction mode (6543).** pg8000 caches
+  server-side prepared statements; Supavisor transaction mode gives each
+  transaction a possibly-different backend, so a statement prepared in one
+  batch won't exist in the next and you get `prepared statement "..." does
+  not exist` on multi-batch runs. Session mode pins one backend per
+  connection, so pg8000 behaves as it would against a direct connection.
+
+Do **not** use the **direct** endpoint (`db.<project-ref>.supabase.co:5432`):
+it's IPv6-only on the default tier, and Lambda egresses over IPv4 (in a VPC
+via NAT, or via the Lambda-managed network when not in a VPC), so it
+black-holes and you get `Can't create a connection to host ...
+db.<ref>.supabase.co ... port 5432`. The pooler is IPv4-reachable.
 
 > **Passwords with special characters must be percent-encoded** in the URL
 > (`@` → `%40`, `#` → `%23`, `/` → `%2F`, `:` → `%3A`). Otherwise `urlparse`
@@ -111,15 +138,42 @@ is the SQL checklist in the planning doc.
 
 ## Lambda deploy
 
+> **Zip layout matters.** The modules import each other flat (`from config
+> import …`, `import extract, load, transform`), not as a package. So the
+> `.py` files must sit at the **root** of the zip — `handler.py`, not
+> `etl/handler.py`. If `handler.py` ends up nested one level down, Lambda
+> fails at import with `Unable to import module 'handler': No module named
+> 'handler'`. Zip the *contents* of `etl/`, never the `etl/` folder itself.
+
+**macOS / Linux** (from `player-analytics/etl`):
+
 ```bash
-# from player-analytics/etl
 pip install -r requirements.txt -t .
 zip -r ../etl.zip . -x '*.pyc' '__pycache__/*' '.venv/*' 'tests/*' '.env' '.env.example'
 ```
 
+**Windows / PowerShell** (from `player-analytics\etl`):
+
+```powershell
+pip install -r requirements.txt -t .
+
+# .\* zips the package CONTENTS (handler.py at root). `Compress-Archive
+# -Path .\etl` would nest everything under etl\ and break the import.
+# Compress-Archive has no exclude flag, so drop build/secret files first.
+$exclude = @('tests', '.venv', '__pycache__', '.env', '.env.example')
+$items = Get-ChildItem -Path .\* -Exclude $exclude
+Compress-Archive -Path $items -DestinationPath ..\etl.zip -Force
+```
+
+Sanity-check the layout before uploading — `handler.py` should be top-level:
+
+```powershell
+Expand-Archive ..\etl.zip .\_ziptest -Force; Get-ChildItem .\_ziptest | Select Name
+```
+
 Upload `etl.zip` to a Python 3.12 Lambda. Set:
 
-- **handler:** `etl.handler.lambda_handler`
+- **handler:** `handler.lambda_handler`  (flat zip → no `etl.` prefix)
 - **memory:** 256 MB is plenty (batch ETL is IO-bound)
 - **timeout:** 15 min (the hard ceiling — see `MAX_BATCHES` if you want to
   cap shorter)

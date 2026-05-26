@@ -31,6 +31,7 @@ class Config:
     etl_key: str
     ssl_mode: str            # "require" (encrypt, no verify) or "verify-full"
     ssl_root_cert: str | None  # path to CA cert; only used by "verify-full"
+    connect_timeout: int     # socket connect timeout (s); fail fast vs. hang
 
     @classmethod
     def load(cls) -> "Config":
@@ -42,6 +43,7 @@ class Config:
             etl_key=os.environ.get("ETL_KEY", "brawler_fact_load"),
             ssl_mode=os.environ.get("DB_SSL_MODE", "require"),
             ssl_root_cert=os.environ.get("DB_SSL_ROOT_CERT") or None,
+            connect_timeout=int(os.environ.get("DB_CONNECT_TIMEOUT", "10")),
         )
 
 

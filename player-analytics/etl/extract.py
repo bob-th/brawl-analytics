@@ -23,7 +23,7 @@ JOIN private.battle_info bi
 LEFT JOIN private.battle_log bl
   ON bl.player_tag = bts.player_tag
  AND bl.battle_time = bts.battle_time
-WHERE bts.created_at > %s
+WHERE bts.created_at >= %s
 ORDER BY bts.created_at, bts.battle_time, bts.player_tag
 LIMIT %s
 """

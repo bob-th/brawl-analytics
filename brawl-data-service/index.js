@@ -1,11 +1,11 @@
+import './loadEnv.js';
 import express from "express";
-import dotenv from 'dotenv/config';
 import playerRouter from "./routes/playerRouter.js";
 import cron from "node-cron";
 
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.DATA_SERVICE_PORT;
 
 app.use(express.json());
 
