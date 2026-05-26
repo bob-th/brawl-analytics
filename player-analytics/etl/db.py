@@ -38,11 +38,24 @@ def _ssl_context(ssl_mode: str, ssl_root_cert: str | None) -> ssl.SSLContext:
 
 
 @contextmanager
-def connect(url: str, ssl_mode: str = "require", ssl_root_cert: str | None = None):
-    """Yield a pg8000 connection, closing it on exit."""
+def connect(
+    url: str,
+    ssl_mode: str = "require",
+    ssl_root_cert: str | None = None,
+    connect_timeout: int = 10,
+):
+    """Yield a pg8000 connection, closing it on exit.
+
+    `connect_timeout` bounds the socket connect (seconds). Without it pg8000
+    passes timeout=None and a black-holed host (e.g. an unreachable VPC route
+    or the IPv6-only Supabase *direct* endpoint behind an IPv4 NAT) hangs
+    until the Lambda's own ceiling instead of failing fast.
+    """
     kwargs = parse_db_url(url)
     conn = pg8000.dbapi.connect(
-        ssl_context=_ssl_context(ssl_mode, ssl_root_cert), **kwargs
+        ssl_context=_ssl_context(ssl_mode, ssl_root_cert),
+        timeout=connect_timeout,
+        **kwargs,
     )
     try:
         yield conn

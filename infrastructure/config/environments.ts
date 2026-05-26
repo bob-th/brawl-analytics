@@ -29,7 +29,7 @@ export interface EnvironmentConfig {
 
 export const environments = {
   default: {
-    region: 'us-east-1',
+    region: 'us-east-2',
     vpc: {
       cidr: '10.0.0.0/16',
       maxAzs: 2,
