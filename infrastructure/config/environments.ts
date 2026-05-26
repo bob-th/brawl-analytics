@@ -35,7 +35,7 @@ export const environments = {
       maxAzs: 2,
       natGateways: 1,
       natInstanceClass: InstanceClass.T4G,
-      natInstanceSize: InstanceSize.MICRO,
+      natInstanceSize: InstanceSize.NANO,
     },
   } satisfies EnvironmentConfig,
 } as const;

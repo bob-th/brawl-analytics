@@ -58,4 +58,4 @@ npm run destroy      # tear it down
 ## Configuration
 
 Network settings live in `config/environments.ts` — VPC CIDR, AZ count, NAT
-instance count, and the fck-nat instance class/size (default `t4g.micro`).
+instance count, and the fck-nat instance class/size (default `t4g.nano`).
