@@ -4,7 +4,7 @@ services:
     ports:
       - "4001:4001"
     env_file:
-      - ./brawl-data-service/.env
+      - ./infrastructure/.env
     restart: unless-stopped
     develop:
       watch:
@@ -22,7 +22,7 @@ services:
     ports:
       - "4000:4000"
     env_file:
-      - ./backend/.env
+      - ./infrastructure/.env
     environment:
       - DATA_SERVICE_URL=http://brawl-data-service:4001
     depends_on:
