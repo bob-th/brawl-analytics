@@ -15,6 +15,7 @@ SELECT
   bts.created_at,
   bi.mode_id,
   bi.map,
+  bi.battle_level,
   bl.trophies      AS overall_trophies,
   bl.trophy_change
 FROM private.brawler_trophies_store bts
@@ -38,6 +39,7 @@ _COLUMNS = (
     "created_at",
     "mode_id",
     "map",
+    "battle_level",
     "overall_trophies",
     "trophy_change",
 )

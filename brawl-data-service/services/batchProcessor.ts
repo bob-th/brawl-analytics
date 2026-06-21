@@ -1,23 +1,15 @@
 import pLimit from 'p-limit';
 import { fetchAndFormatBattles } from './brawlClient.ts';
-import { persistNewBattles } from './battleWriter.ts';
+import { persistNewBattlesBatch } from './battleWriter.ts';
+import type { BattleGroup } from './battleWriter.ts';
 
-// Bounded fan-out within a single batch. Each per-tag task is mostly network I/O
-// (two Brawl API calls + three Supabase upserts) and independent of the others,
-// so concurrent execution drops wall time without much code. Capped to stay
-// under the Brawl Stars per-key rate limit and avoid flooding the Supabase
-// connection pool. Tunable in prod via env without a code change.
-const BATCH_CONCURRENCY = Number(process.env.BATCH_CONCURRENCY) || 10;
-
-// Pulls fresh battles for one tag and persists them. Writes rely on ON CONFLICT
-// DO NOTHING, so calling repeatedly is safe — existing rows are skipped at the
-// DB layer.
-async function processTag(playerTag: string): Promise<number> {
-  const { tag, battles } = await fetchAndFormatBattles(playerTag);
-  if (battles.length === 0) return 0;
-  await persistNewBattles(tag, battles);
-  return battles.length;
-}
+// Bounded fan-out within a single batch. Each per-tag task is now just the
+// network I/O (two Brawl API calls) — persistence is deferred to one batched
+// write after every fetch resolves. Sized to one SQS message's worth of tags
+// (≤25) so a full message fetches in a single wave, while still capping load on
+// the Brawl Stars per-key rate limit. Tunable in prod via env without a code
+// change.
+const BATCH_CONCURRENCY = Number(process.env.BATCH_CONCURRENCY) || 25;
 
 export interface BatchSummary {
   ok: number;
@@ -25,10 +17,13 @@ export interface BatchSummary {
 }
 
 // Processes one batch of player tags (e.g. the contents of one SQS message —
-// up to 25 tags). For each tag: fetch from the Brawl API, reformat, and persist.
-// Tags are supplied by the caller; this function never reads tags itself.
-// Errors on one tag are logged and don't halt the rest — Promise.allSettled
-// gives that isolation natively.
+// up to 25 tags). Fetch + reformat run concurrently per tag; the battles from
+// every tag that fetched successfully are then persisted in a single batched
+// write per table (see persistNewBattlesBatch), so one message costs three DB
+// round-trips instead of three per tag. Tags are supplied by the caller; this
+// function never reads tags itself. A fetch error on one tag is logged and
+// doesn't halt the rest — Promise.allSettled gives that isolation natively, and
+// the surviving tags still get written.
 export async function processTagBatch(
   playerTags: string[],
 ): Promise<BatchSummary> {
@@ -43,14 +38,22 @@ export async function processTagBatch(
 
   const limit = pLimit(BATCH_CONCURRENCY);
   const results = await Promise.allSettled(
-    playerTags.map((tag) => limit(() => processTag(tag))),
+    playerTags.map((tag) => limit(() => fetchAndFormatBattles(tag))),
   );
 
+  // ok/failed reflect the fetch phase — tags whose battles made it into the
+  // batched write. Write errors span the whole batch and are logged inside
+  // persistNewBattlesBatch rather than attributed to a single tag.
   let ok = 0;
   let failed = 0;
+  const groups: BattleGroup[] = [];
   results.forEach((r, i) => {
     if (r.status === 'fulfilled') {
       ok += 1;
+      const { tag, battles } = r.value;
+      if (battles.length > 0) {
+        groups.push({ queryPlayerTag: tag, battles });
+      }
     } else {
       failed += 1;
       console.error(
@@ -59,6 +62,9 @@ export async function processTagBatch(
       );
     }
   });
+
+  // One batched write per table for the whole message.
+  await persistNewBattlesBatch(groups);
 
   const ms = Date.now() - startedAt;
   console.log(`processTagBatch: done in ${ms}ms — ok=${ok} failed=${failed}`);

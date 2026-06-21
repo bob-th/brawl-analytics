@@ -147,6 +147,35 @@ def test_transform_row_non_targeted_player_nulls_to_zero_trophy_change():
     assert out[11] == 0         # trophy_change coerced to 0
 
 
+def test_transform_row_non_targeted_player_falls_back_to_battle_level():
+    """Non-targeted players have no battle_log row -> overall_trophies is NULL,
+    but battle_info.battle_level gives a rough battle trophy level. The band key
+    must fall back to it; the overall_trophies measure stays NULL (exact)."""
+    row = {
+        "player_tag": "#OPP",
+        "battle_id": "deadbeef",
+        "battle_time": datetime(2026, 5, 18, 14, 30, tzinfo=timezone.utc),
+        "brawler": 16000103,
+        "brawler_trophies": 2050,
+        "placement": 0,
+        "created_at": datetime(2026, 5, 18, 14, 31, tzinfo=timezone.utc),
+        "mode_id": 6,
+        "map": "Open Business",
+        "battle_level": 95000,          # 90k-100k -> band key 10 in fixture
+        "overall_trophies": None,
+        "trophy_change": None,
+    }
+    out = transform_row(
+        row,
+        brawlers=BRAWLERS,
+        trophy_bands=TROPHY_BANDS,
+        brawler_trophy_bands=BRAWLER_TROPHY_BANDS,
+        battle_dim_cache=BATTLE_DIM,
+    )
+    assert out[5] == 10         # trophy_band_key from battle_level fallback
+    assert out[9] is None       # overall_trophies passthrough stays NULL
+
+
 def test_transform_row_unknown_brawler_raises():
     row = {
         "player_tag": "#X",
